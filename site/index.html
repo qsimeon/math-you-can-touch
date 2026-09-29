@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="A local, data-driven learning exhibition about mathematical claims, geometry, search, and proof.">
+  <title>Math You Can Touch · fences and tiny programs</title>
+  <link rel="stylesheet" href="site.css">
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to the exhibition</a>
+  <noscript>
+    <div class="script-notice" role="status">This local exhibition needs JavaScript to read the supplied <code>data.js</code> and draw saved evidence. It does not run a search, a proof assistant, or an evaluator in your browser.</div>
+  </noscript>
+
+  <header class="masthead">
+    <a class="wordmark" href="#opening" aria-label="Return to opening">OpenMath <span>field notes</span></a>
+    <button id="presentationToggle" class="presentation-button" type="button" aria-pressed="false">Presentation mode <span aria-hidden="true">↗</span></button>
+  </header>
+
+  <main id="main-content">
+    <section id="opening" class="scene opening" data-scene="Opening" aria-labelledby="pageTitle">
+      <div class="opening-copy">
+        <p class="kicker">A local learning exhibition</p>
+        <h1 id="pageTitle">Math you can touch.</h1>
+        <p class="deck">Move fences to make triangular yards. Program a tiny robot and predict whether it will stop. Start in the playgrounds, then explore the mathematics and saved experiments below.</p>
+        <div class="opening-links">
+          <a class="text-link" href="#kobon">Begin with the fences <span aria-hidden="true">↓</span></a>
+          <a id="garden3dLink" class="garden-link" href="3d.html">Play with the fences <span aria-hidden="true">↗</span></a>
+          <a class="garden-link" href="beaver.html">Program the tape robot <span aria-hidden="true">↗</span></a>
+        </div>
+      </div>
+      <figure class="opening-mark" aria-label="Three infinite fences, x equals 140, y equals 320, and y equals x minus 20, enclosing a triangular yard with vertices 140,120; 140,320; and 340,320.">
+        <svg viewBox="0 0 460 400" role="img" aria-hidden="true">
+          <path d="M140 26V374M30 320H430M30 10L400 380" />
+          <polygon class="mark-face" points="140,120 140,320 340,320" />
+          <circle cx="140" cy="120" r="6" /><circle cx="140" cy="320" r="6" /><circle cx="340" cy="320" r="6" />
+        </svg>
+        <figcaption>Three fences meet to make one yard.</figcaption>
+      </figure>
+    </section>
+
+    <section id="dataState" class="data-state" aria-live="polite">
+      <p class="kicker">Local record</p>
+      <h2>Waiting for <code>window.LEARNING_DATA</code>.</h2>
+      <p id="dataStateMessage">The page is ready to display saved geometry and traces from <code>data.js</code>. Until that file is supplied, it will not display experimental values as facts.</p>
+    </section>
+
+    <div id="exhibition" hidden>
+      <section id="results" class="scene result-ledger" data-scene="Current results" aria-labelledby="resultsTitle">
+        <div class="section-intro">
+          <p class="kicker">Current record</p>
+          <h2 id="resultsTitle">What the supplied records establish</h2>
+        </div>
+        <div id="resultLedger" class="ledger" aria-live="polite"></div>
+        <p class="scope-note">Each statement names its evidence level. A displayed arrangement shows what that saved arrangement achieves. It does not establish a global maximum, novelty, a Lean proof, or an official evaluation.</p>
+      </section>
+
+      <section id="kobon" class="scene kobon-scene" data-scene="Kobon geometry" aria-labelledby="kobonTitle">
+        <div class="section-intro split-intro">
+          <div>
+            <p class="kicker">Experiment one · Kobon triangles</p>
+            <h2 id="kobonTitle">Count regions, not every triangle you can draw.</h2>
+          </div>
+          <p>Think of each line as an infinite fence. A triangular yard counts only when three fences close it in and no other fence cuts across the yard.</p>
+        </div>
+
+        <div class="lesson-grid">
+          <figure class="teaching-figure">
+            <svg class="three-line-diagram" viewBox="0 0 600 430" role="img" aria-labelledby="threeLineTitle threeLineDescription">
+              <title id="threeLineTitle">Three infinite fences enclose a triangular yard. A fourth fence divides it.</title>
+              <desc id="threeLineDescription">The original yard has vertices at 140,120; 140,320; and 340,320. The fences are x equals 140, y equals 320, and y equals x minus 20. When enabled, the line y equals 220 divides the old yard. The smaller yard has vertices 140,120; 140,220; and 240,220.</desc>
+              <g id="lessonLines">
+                <path d="M140 56V374" /><path d="M56 320H416" /><path d="M68 48L404 384" />
+              </g>
+              <polygon id="oldYard" points="140,120 140,320 340,320" />
+              <g id="crossedLesson" hidden>
+                <path class="cross-line" d="M56 220H416" />
+                <polygon id="smallYard" points="140,120 140,220 240,220" />
+                <circle cx="140" cy="220" r="6" /><circle cx="240" cy="220" r="6" />
+              </g>
+            </svg>
+            <figcaption id="lessonCaption">Three infinite fences enclose one triangular yard.</figcaption>
+          </figure>
+          <div class="lesson-copy">
+            <p class="lesson-number">01</p>
+            <h3>One extra fence changes the yard.</h3>
+            <p id="lessonExplanation">The three fences meet at (140,120), (140,320), and (340,320). Their uncut triangular yard counts as one face.</p>
+            <label class="switch-control" for="crossToggle">
+              <input id="crossToggle" type="checkbox">
+              <span class="switch-art" aria-hidden="true"></span>
+              <span>Build the fence y = 220 through the yard</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="record-header">
+          <div>
+            <p class="kicker">Exact geometry</p>
+            <h3>Choose a record and inspect its faces.</h3>
+          </div>
+          <p id="snapshotReadout" class="record-readout">No saved geometry selected.</p>
+        </div>
+        <div class="snapshot-picker" id="snapshotPicker" role="group" aria-label="Saved geometry records"></div>
+
+        <div class="geometry-workspace">
+          <div class="geometry-stage">
+            <svg id="arrangement" viewBox="0 0 1000 700" role="group" aria-labelledby="arrangementTitle arrangementDescription" tabindex="0">
+              <title id="arrangementTitle">Saved line arrangement</title>
+              <desc id="arrangementDescription">No supplied arrangement is available.</desc>
+              <g id="arrangementFaces"></g>
+              <g id="arrangementLines"></g>
+            </svg>
+            <p class="diagram-note">Line equations remain exact strings in the local record. The screen drawing uses floating-point placement only.</p>
+            <div class="tool-row" aria-label="Geometry controls">
+              <button id="faceToggle" type="button" aria-pressed="true">Hide face color</button>
+              <button id="zoomOut" type="button">Zoom out</button>
+              <button id="zoomIn" type="button">Zoom in</button>
+              <button id="zoomFace" type="button" disabled>Zoom to face</button>
+              <button id="resetGeometry" type="button">Show full record</button>
+              <button id="downloadGeometry" type="button">Download exact lines</button>
+            </div>
+          </div>
+          <aside class="face-inspector" aria-labelledby="faceInspectorTitle">
+            <p class="kicker">Face inspector</p>
+            <h3 id="faceInspectorTitle">Read the witness</h3>
+            <p id="faceExplanation">Choose a colored face or use the list below.</p>
+            <div id="supportDetails" class="support-details" hidden>
+              <p>Supporting equations</p>
+              <ol id="supportLines"></ol>
+            </div>
+            <div class="face-list-heading"><span>Triangular yards</span><span id="faceCount">0</span></div>
+            <ol id="faceList" class="face-list" aria-label="Triangular yards"></ol>
+          </aside>
+        </div>
+      </section>
+
+      <section id="search" class="scene search-scene" data-scene="Structured search" aria-labelledby="searchTitle">
+        <div class="section-intro split-intro">
+          <div>
+            <p class="kicker">Experiment two · structured search</p>
+            <h2 id="searchTitle">A search outcome has a history.</h2>
+          </div>
+          <p>Saved runs preserve method, seed, starting point, proposals, best result, elapsed time, and stopping reason. That makes the outcome inspectable without pretending the display itself reran the search.</p>
+        </div>
+        <div id="searchOutcome" class="search-outcome" aria-live="polite"></div>
+        <div class="run-table-wrap">
+          <table>
+            <caption>Completed pilot searches</caption>
+            <thead><tr><th scope="col">Record</th><th scope="col">Method</th><th scope="col">Start</th><th scope="col">Best</th><th scope="col">Proposals</th><th scope="col">Elapsed</th><th scope="col">Stop</th></tr></thead>
+            <tbody id="runRows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="busy-beaver" class="scene beaver-scene" data-scene="Busy Beaver trace" aria-labelledby="beaverTitle">
+        <div class="section-intro split-intro">
+          <div>
+            <p class="kicker">Experiment three · a small machine</p>
+            <h2 id="beaverTitle">A tiny robot walks across endless blank tiles.</h2>
+          </div>
+          <p>Each robot instruction says: write 0 or 1, move left or right, then enter state A, B, or stop. The Busy Beaver challenge asks which tiny robot takes the most steps before it eventually stops.</p>
+        </div>
+        <div class="beaver-layout">
+          <section class="tape-machine" aria-labelledby="tapeTitle">
+            <div class="machine-heading">
+              <div><p class="kicker">Champion trace</p><h3 id="tapeTitle">The robot’s endless tape</h3></div>
+              <p id="traceStatus" class="trace-status">No trace loaded.</p>
+            </div>
+            <div id="tape" class="tape" role="img" aria-label="Busy Beaver tape"></div>
+            <div class="machine-controls" aria-label="Trace playback controls">
+              <button id="traceReset" type="button">Reset</button>
+              <button id="traceStep" type="button">Next saved step</button>
+              <button id="traceRun" type="button" aria-pressed="false">Run at 4 steps per second</button>
+            </div>
+            <p id="traceFeedback" class="trace-feedback" aria-live="polite">The replay stops after at most 21 saved states.</p>
+          </section>
+          <section class="transition-panel" aria-labelledby="transitionTitle">
+            <p class="kicker">Transition table</p>
+            <h3 id="transitionTitle">The selected instruction</h3>
+            <div id="transitionTable" class="transition-table" aria-live="polite"></div>
+          </section>
+        </div>
+        <div id="beaverSummary" class="beaver-summary" aria-live="polite"></div>
+        <p class="scope-note">This six-step trace shows that at least one robot eventually stops after six steps. It is a lower bound, not proof that no robot can run longer. A third independent simulator with 203 fixed cells agreed on all 20,736 outcomes.</p>
+      </section>
+
+      <section id="claims" class="scene claim-scene" data-scene="Claim boundaries" aria-labelledby="claimsTitle">
+        <div class="section-intro">
+          <p class="kicker">The important distinction</p>
+          <h2 id="claimsTitle">Evidence answers a precise question.</h2>
+        </div>
+        <div class="claim-columns">
+          <article>
+            <p class="lesson-number">01</p><h3>Witness</h3>
+            <p>An exact arrangement with its validated faces shows that at least that many faces are possible. That is a lower bound for the stated model.</p>
+          </article>
+          <article>
+            <p class="lesson-number">02</p><h3>Proof</h3>
+            <p>A proof connects definitions to a conclusion. A formal proof assistant can check a specified theorem, but no such result is claimed here unless the supplied record says so.</p>
+          </article>
+          <article>
+            <p class="lesson-number">03</p><h3>Novelty</h3>
+            <p>Finding an arrangement or a trace does not establish that it is new. Novelty requires comparison with the relevant public record.</p>
+          </article>
+        </div>
+        <aside class="halt-note">
+          <p class="kicker">Busy Beaver lesson</p>
+          <h3>Halting after a saved trace proves one lower bound.</h3>
+          <p>A machine that halts after a recorded number of steps demonstrates that this many steps are achievable. A timeout only says that this run did not halt before the cap. It does not prove an upper bound or non-halting.</p>
+        </aside>
+      </section>
+
+      <section id="sources" class="scene sources-scene" data-scene="Sources and limits" aria-labelledby="sourcesTitle">
+        <div class="section-intro split-intro">
+          <div><p class="kicker">Take this with you</p><h2 id="sourcesTitle">A conclusion should carry its limits.</h2></div>
+          <p>These are the references attached to the records on this page. Opening a link is your choice; the exhibition does not fetch sources while you explore.</p>
+        </div>
+        <div class="source-columns">
+          <div><h3>Sources</h3><ul id="sourceList" class="source-list"></ul></div>
+          <div><h3>Limitations</h3><ul id="limitationList" class="limitation-list"></ul></div>
+        </div>
+        <p id="formalStatus" class="formal-status"></p>
+      </section>
+    </div>
+  </main>
+
+  <nav id="presentationControls" class="presentation-controls" aria-label="Presentation controls" hidden>
+    <p id="sceneIndicator">Scene 1</p>
+    <button id="previousScene" type="button">Previous</button>
+    <button id="nextScene" type="button">Next</button>
+    <button id="exitPresentation" type="button">Exit <kbd>Esc</kbd></button>
+  </nav>
+
+  <script src="data.js"></script>
+  <script src="site.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+{
+  "classification": "PRIOR-ART REPRODUCTION; no novelty claim",
+  "construction_attribution": "Johannes Bader",
+  "drawing_author": "Pavlo Savchuk",
+  "source": {
+    "url": "https://raw.githubusercontent.com/zegalur/line-order/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/gallery/imgs/kobon_18_93tri_lines.svg",
+    "upstream_commit": "2631b8793eb351be2ad6b8a91b7194eeb67e25bb",
+    "sha256": "31b4603ac4db28ca9d6b03ab66a93d1e9d1e5405a4b246e6edef6c3976553544",
+    "retrieved_at": "2026-09-27T16:48:13.084515+00:00",
+    "execution": "none; XML text data only"
+  },
+  "literature": "https://arxiv.org/html/2507.07951v1",
+  "license": "CC BY 4.0 as declared in upstream README",
+  "license_evidence_url": "https://raw.githubusercontent.com/zegalur/line-order/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/README.md",
+  "license_evidence_sha256": "1e51bb7ef771e87508542386d00aea87e00152248d564dce71dd7c238a8c16a2",
+  "reuse_changes": "Extracted 18 SVG line endpoints only, ignored all filled paths and the caption count. Parsed decimal strings as exact Fractions. On the axis with larger endpoint separation, rounded slope and intercept to 1e-6 using ties-to-even, then reduced to canonical primitive integer line coefficients. Original unpublished exact coordinates and identical original topology are not claimed. Each SVG line position is preserved as its 0-based candidate index.",
+  "reconstruction_script": "tools/reconstruct_prior_art_93.py",
+  "solution_sha256": "268c12b01a2c406693cffb9395be3396b0bb09e487c1142acc468d95b63dbd41",
+  "local_verification": {
+    "triangles": 93,
+    "full_face_sets_agree": true,
+    "parallel_pairs": [
+      [
+        0,
+        1
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        12,
+        13
+      ]
+    ],
+    "concurrent_triples": []
+  },
+  "formal_proof": false,
+  "autolab_evaluation": false,
+  "created_at": "2026-09-27T16:51:45.636877+00:00"
+}

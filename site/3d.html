@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
+  <meta name="description" content="A local Three.js tabletop view of supplied Kobon triangle witnesses.">
+  <title>Kobon fence playground</title>
+  <link rel="stylesheet" href="three-view.css">
+</head>
+<body>
+  <a class="skip-link" href="#controls">Skip the tabletop</a>
+  <main>
+    <nav class="page-nav" aria-label="Explore the project"><a href="index.html">Experiment story</a><a href="beaver.html">Tape robot →</a></nav>
+    <header class="page-head">
+      <p class="eyebrow">Exact geometry · start with four fences</p>
+      <h1>Move one fence.<br>What changes?</h1>
+      <p class="deck">Start with four infinitely long fences. Choose any fence, then slide or rotate it to see which triangular yards survive. When you are ready, try the 18-fence example. Its 93 yards are a known construction, not a proof of the maximum.</p>
+    </header>
+
+    <section id="viewerShell" class="viewer-shell" aria-labelledby="tableTitle">
+      <div class="viewer-copy">
+        <p class="eyebrow">Interactive tabletop</p>
+        <h2 id="tableTitle">18 fences. A delicate balance.</h2>
+        <p id="recordReadout" class="record-readout" aria-live="polite">Checking the verified local geometry…</p>
+      </div>
+      <div id="webglStage" class="webgl-stage" role="region" tabindex="0" aria-label="Interactive perspective of a supplied line arrangement">
+        <div id="webglFallback" class="fallback" hidden>
+          <p class="eyebrow">3D view unavailable</p>
+          <h2>WebGL could not start here.</h2>
+          <p>This page has not substituted a fake 3D drawing. You can still inspect the supplied planar arrangement in the <a href="index.html#kobon">2D learning view</a>.</p>
+        </div>
+        <p id="loadingState" class="loading-state" aria-live="polite">Loading saved geometry…</p>
+      </div>
+      <section id="fenceWorkbench" class="fence-workbench" aria-labelledby="fenceWorkbenchTitle">
+        <div class="fence-copy">
+          <p id="workbenchEyebrow" class="eyebrow">A four-line warm-up</p>
+          <h2 id="fenceWorkbenchTitle">Make a triangle, then try to protect it.</h2>
+          <p id="workbenchDescription">Choose any fence. In Edit mode, drag its round handle to slide it parallel. The nudge buttons apply a small rational rotation, then every move snaps to an exact integer equation before scoring.</p>
+          <p id="liveScore" class="live-score" aria-live="polite">Exact score loading…</p>
+        </div>
+        <div class="fence-editor">
+          <svg id="fenceSvg" viewBox="0 0 720 480" role="group" aria-labelledby="fenceSvgTitle fenceSvgDescription" tabindex="0">
+            <title id="fenceSvgTitle">Editable fence tabletop</title>
+            <desc id="fenceSvgDescription">Choose a fence from the list or click a line. In Edit mode drag the selected line handle to move it parallel. In Camera mode drag to pan the tabletop.</desc>
+            <rect x="0" y="0" width="720" height="480" class="felt"></rect>
+            <g id="fenceFaces"></g><g id="fenceLines"></g><g id="fenceHandles"></g>
+          </svg>
+          <div class="edit-actions" role="group" aria-label="Fence editing controls">
+            <button id="editMode" type="button" aria-pressed="true">Edit fences</button><button id="cameraMode" type="button" aria-pressed="false">Move camera</button>
+            <button id="editPublished" type="button">Edit published 93</button><button id="turnLeft" type="button">Nudge ↺</button><button id="turnRight" type="button">Nudge ↻</button>
+            <button id="undoFence" type="button" disabled>Undo move</button><button id="resetFence" type="button">Reset puzzle</button><button id="downloadFence" type="button">Download exact lines</button>
+          </div>
+          <p id="dragHint" class="drag-hint">Edit mode: drag the round handle. Click a fence or choose one below.</p>
+        </div>
+        <aside class="fence-picker" aria-labelledby="fencePickerTitle"><p class="eyebrow">Fence rack</p><h3 id="fencePickerTitle">Choose a fence</h3><ol id="fenceList"></ol></aside>
+      </section>
+    <section id="motionLesson" class="motion-lesson" hidden aria-labelledby="motionTitle">
+      <div>
+        <p class="eyebrow">Move the red fence</p>
+        <h2 id="motionTitle">A gain here can cost two yards there.</h2>
+        <p id="motionDescription">This control displays only supplied, precomputed frames. It does not solve, interpolate, or score a new arrangement.</p>
+      </div>
+      <div class="motion-controls">
+        <label for="motionSlider">Position <output id="motionFrameReadout">0</output></label>
+        <input id="motionSlider" type="range" min="0" max="0" value="0" step="1">
+        <div class="motion-stat"><strong id="motionScore">—</strong><span>triangular yards in the whole arrangement</span></div>
+        <div class="motion-stat"><strong id="motionChanged">—</strong><span>gained + lost relative to the original 93</span></div>
+        <button id="resetMotion" type="button">Reset to recovered 93</button>
+      </div>
+    </section>
+      <p class="table-note">Drag the table to orbit. Use the wheel to zoom. Fences are line segments clipped only by this tabletop, to show that the underlying equations continue indefinitely.</p>
+    </section>
+
+    <section id="controls" class="control-deck" aria-label="Tabletop controls">
+      <div class="record-controls">
+        <p class="eyebrow">Snapshot</p>
+        <div id="snapshotPicker" class="snapshot-picker" role="group" aria-label="Supplied geometry snapshots"></div>
+        <p class="source-note"><strong>93 faces:</strong> known construction attributed to Johannes Bader, recovered from Pavlo Savchuk’s LineOrder SVG. <strong>76 faces:</strong> original local search record. The 93 construction is published prior art, not our discovery.</p>
+      </div>
+      <div class="camera-controls" role="group" aria-label="Camera controls">
+        <p class="eyebrow">Camera</p>
+        <div class="button-row">
+          <button id="orbitLeft" type="button" aria-label="Orbit left">← Orbit</button>
+          <button id="orbitRight" type="button" aria-label="Orbit right">Orbit →</button>
+          <button id="orbitUp" type="button" aria-label="Raise camera">Raise</button>
+          <button id="orbitDown" type="button" aria-label="Lower camera">Lower</button>
+          <button id="topView" type="button">Top view</button>
+          <button id="fitView" type="button">Show all faces</button>
+          <button id="centralView" type="button">Explore center</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="inspection-grid" aria-label="Selected face details">
+      <article class="inspection-panel">
+        <p class="eyebrow">Face inspector</p>
+        <h2 id="faceTitle">Choose a triangular yard</h2>
+        <div class="button-row"><button id="previousFace" type="button">Previous face</button><button id="nextFace" type="button">Next face</button></div>
+        <p id="faceExplanation">Click a triangular yard to highlight the three fences that enclose it.</p>
+        <div id="supportDetails" hidden>
+          <p class="equation-label">Supporting equations</p>
+          <ol id="supportLines" class="support-lines"></ol>
+        </div>
+      </article>
+      <article class="interaction-panel">
+        <p class="eyebrow">How to explore</p>
+        <h2>Orbit without dragging.</h2>
+        <p>Focus the table and use <kbd>←</kbd>/<kbd>→</kbd> to orbit, <kbd>↑</kbd>/<kbd>↓</kbd> to raise or lower the camera, <kbd>+</kbd>/<kbd>−</kbd> to zoom, and <kbd>T</kbd> for top view.</p>
+        <p class="plain-note">Face tiles are raised only to make selection legible. No third spatial coordinate is part of the saved mathematics.</p>
+      </article>
+    </section>
+
+
+
+    <footer><a href="index.html">Read the experiment story</a> · <a href="beaver.html">Explore the Busy Beaver learning scene →</a></footer>
+  </main>
+  <script src="data.js"></script>
+  <script src="vendor/three.min.js"></script>
+  <script src="fence-geometry.js"></script>
+  <script src="three-view.js?v=20260929"></script>
+</body>
+</html>
