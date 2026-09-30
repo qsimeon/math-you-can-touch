@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="An offline 2D fence playground. Move exact lines, inspect triangular faces and explore a published 93-face construction.">
+  <meta name="description" content="Drag and turn fences to make triangular yards, then explore Johannes Bader’s published 93-yard construction.">
   <title>Move one fence · Math You Can Touch</title>
   <link rel="stylesheet" href="playground.css">
   <link rel="stylesheet" href="fences.css">
@@ -13,45 +13,46 @@
 <a class="skip-link" href="#fenceSvg">Skip to the board</a>
 <main>
   <nav class="page-nav" aria-label="Explore the project"><a href="index.html">Experiment story</a><a href="beaver.html">Tape robot →</a></nav>
-  <noscript><p class="notice">JavaScript is needed to draw and edit exact lines. No arrangement has been scored.</p></noscript>
+  <noscript><p class="notice">This playground needs JavaScript to draw and count the fences.</p></noscript>
   <header class="page-head">
-    <div><p class="eyebrow">01 / Infinite lines, finite regions</p><h1>Move one fence.<br>What changes?</h1></div>
-    <p class="deck">Start with four infinitely long fences. Choose any fence, then slide or rotate it. A triangular yard counts only when no other fence crosses its interior. Next, try the 18-fence example. Its 93 yards are a known construction, not a proof of the maximum.</p>
+    <div><p class="eyebrow">Playground 1 · Fences</p><h1>Move one fence.<br>What changes?</h1></div>
+    <p class="deck">Start with four fences that run forever in both directions. Choose any fence and move it. A shaded triangle counts as a yard only if no other fence cuts through it. Then try Bader’s 18-fence construction, a published example with 93 yards, not a proof of the maximum.</p>
   </header>
   <section id="viewerShell" class="viewer-shell" aria-labelledby="tableTitle">
-    <div class="board-heading"><h2 id="tableTitle">4 fences. A small warm-up.</h2><p id="liveScore" class="live-score" aria-live="polite">Exact score loading…</p></div>
+    <div class="board-heading"><h2 id="tableTitle">4 fences. A small warm-up.</h2><p id="liveScore" class="live-score" aria-live="polite">Counting…</p><div class="quick-start" role="group" aria-label="Choose a board"><button id="quickWarmup" type="button" aria-pressed="true">Try 4 fences</button><button id="quickPublished" type="button" aria-pressed="false">Explore 93 yards</button></div></div>
     <div class="workbench-grid">
       <div class="board-area">
         <svg id="fenceSvg" viewBox="0 0 720 480" role="group" aria-labelledby="fenceSvgTitle fenceSvgDescription" tabindex="0">
           <title id="fenceSvgTitle">Editable 2D fence board</title>
-          <desc id="fenceSvgDescription">Click a line or choose a numbered fence. Drag its round handle to slide it. Arrow keys choose fences, square brackets slide them, and Z undoes a move. Shaded regions are triangular faces. Pan and zoom change only the view.</desc>
+          <desc id="fenceSvgDescription">Drag a fence to slide it, or drag the red ↻ handle to turn it. Use the fence buttons and the Slide and Turn controls without dragging. When the board has focus, arrow keys choose a fence, [ and ] slide it, Q and E turn it, and Z undoes. Shaded triangles are counted yards. Panning and zooming change only the view.</desc>
           <defs><pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r=".7" fill="#b6c5bb"/></pattern></defs>
           <rect width="720" height="480" class="board-paper"/><rect width="720" height="480" fill="url(#grid)"/>
           <g id="fenceFaces"></g><g id="fenceLines"></g><g id="fenceHandles"></g>
         </svg>
-        <div class="view-actions" role="group" aria-label="Board view controls"><button id="editMode" type="button" aria-pressed="true">Edit fences</button><button id="panMode" type="button" aria-pressed="false">Pan view</button><button id="zoomIn" type="button" aria-label="Zoom in">+</button><button id="zoomOut" type="button" aria-label="Zoom out">−</button><button id="fitView" type="button">Fit all</button></div>
-        <p id="dragHint" class="hint">Drag the round handle to slide the selected fence, or use the buttons. Click a shaded yard to inspect it.</p>
+        <div class="view-actions" role="group" aria-label="Board view controls"><button id="editMode" type="button" aria-pressed="true">Move fences</button><button id="panMode" type="button" aria-pressed="false">Pan view</button><button id="zoomIn" type="button" aria-label="Zoom in">+</button><button id="zoomOut" type="button" aria-label="Zoom out">−</button><button id="fitView" type="button">Fit</button></div>
+        <p id="dragHint" class="hint">Drag a fence to slide it. Drag the red ↻ handle to turn it around the center dot.</p>
       </div>
-      <aside class="fence-picker" aria-labelledby="fencePickerTitle"><p class="eyebrow">Choose, then change</p><h3 id="fencePickerTitle">Your fences</h3><ol id="fenceList"></ol>
-        <div class="edit-actions" role="group" aria-label="Fence editing controls"><button id="slideLeft" type="button">Slide −</button><button id="slideRight" type="button">Slide +</button><button id="turnLeft" type="button">Rotate ↺</button><button id="turnRight" type="button">Rotate ↻</button><button id="undoFence" type="button" disabled>Undo move</button><button id="resetFence" type="button">Reset puzzle</button></div>
-        <p class="hint">Red marks the selected fence. Edits snap to integer equations. A rejected move leaves the arrangement unchanged.</p>
+      <aside class="fence-picker" aria-labelledby="fencePickerTitle"><p class="eyebrow">Fences</p><h3 id="fencePickerTitle">Your fences</h3><ol id="fenceList"></ol>
+        <div class="edit-actions" role="group" aria-label="Fence editing controls"><button id="slideLeft" type="button">Slide −</button><button id="slideRight" type="button">Slide +</button><button id="turnLeft" type="button">Turn ↺ 10°</button><button id="turnRight" type="button">Turn ↻ 10°</button><button id="undoFence" type="button" disabled>Undo</button><button id="resetFence" type="button">Reset warm-up</button></div>
+        <p class="hint">The red fence is selected.</p>
+        <details><summary>Keyboard and exact counting</summary><p id="selectedEquation"></p><p class="hint">Click the board first. Arrow keys choose a fence, [ and ] slide it, Q and E turn it, and Z undoes.</p><p class="hint">Each move is rounded to a whole-number line equation and counted exactly. The board refuses a move that would put two fences on the same line. Panning and zooming change only the view.</p></details>
       </aside>
     </div>
-    <div class="board-footer"><p id="recordReadout" aria-live="polite">Checking the local geometry…</p><button id="downloadFence" type="button">Download exact lines</button></div>
+    <div class="board-footer"><p id="recordReadout" aria-live="polite">Counting…</p><button id="downloadFence" type="button">Download exact lines</button></div>
   </section>
   <section class="inspector" aria-labelledby="faceTitle">
-    <div><p class="eyebrow">Look inside the count</p><h2 id="faceTitle">Choose a triangular yard</h2><p id="faceExplanation">Click a shaded yard to highlight the three fences that enclose it.</p><div class="button-row"><button id="previousFace" type="button">Previous face</button><button id="nextFace" type="button">Next face</button><button id="focusFace" type="button">Focus face</button></div></div>
-    <div id="supportDetails" hidden><p class="eyebrow">Supporting equations</p><ol id="supportLines"></ol><p class="hint">The drawing is approximate. The count comes from two agreeing exact integer algorithms.</p></div>
+    <div><p class="eyebrow">Look inside the count</p><h2 id="faceTitle">Pick a yard</h2><p id="faceExplanation">Click a shaded yard, or use Previous yard and Next yard, to highlight its three fences.</p><div class="button-row"><button id="previousFace" type="button">Previous yard</button><button id="nextFace" type="button">Next yard</button><button id="focusFace" type="button">Zoom to yard</button></div></div>
+    <div id="supportDetails" hidden><p class="eyebrow">Its three fences</p><ol id="supportLines"></ol><p class="hint">The drawing is approximate. The count comes from two separate exact methods, which must agree.</p></div>
   </section>
   <section id="fenceWorkbench" class="lesson" aria-labelledby="fenceWorkbenchTitle">
-    <div><p id="workbenchEyebrow" class="eyebrow">A four-line warm-up</p><h2 id="fenceWorkbenchTitle">Make a triangle, then try to protect it.</h2><p id="workbenchDescription">Choose a fence and change it. Undo reverses your last move.</p><div class="button-row"><button id="editPublished" type="button">Edit published 93</button><button id="warmup" type="button">Return to four fences</button></div></div>
-    <div id="controls"><p class="eyebrow">Saved starting points</p><div id="snapshotPicker" class="snapshot-picker" role="group" aria-label="Supplied geometry snapshots"></div><p class="source-note">The 93-face arrangement is Johannes Bader’s known construction, reconstructed from Pavlo Savchuk’s <a href="https://arxiv.org/html/2507.07951v1">LineOrder drawing</a>. The 76-face arrangement is our original local search result. Neither is a new record.</p></div>
+    <div><p id="workbenchEyebrow" class="eyebrow">Warm-up</p><h2 id="fenceWorkbenchTitle">Move a fence and watch yards appear and vanish.</h2><p id="workbenchDescription">Turn a fence with its red handle until a yard disappears. Then press Undo to bring it back.</p><div class="button-row"><button id="editPublished" type="button">Try Bader’s 93</button><button id="warmup" type="button">Back to four fences</button></div></div>
+    <div id="controls"><p class="eyebrow">Saved drawings</p><div id="snapshotPicker" class="snapshot-picker" role="group" aria-label="Saved geometry drawings"></div><p class="source-note">The 93-yard arrangement reproduces Johannes Bader’s published construction. We rebuilt it with exact whole-number coordinates from Pavlo Savchuk’s <a href="https://arxiv.org/html/2507.07951v1">LineOrder drawing</a>. LineOrder is CC BY 4.0, and this is a modified reconstruction. The 76-yard drawing came from our own search. Neither is a new record.</p></div>
   </section>
   <section id="motionLesson" class="lesson motion-lesson" hidden aria-labelledby="motionTitle">
-    <div><p class="eyebrow">41 checked positions of fence 1</p><h2 id="motionTitle">A gain here can cost two yards there.</h2><p>Each position loads a saved exact arrangement and recounts it. Compare the whole arrangement with the original 93. Editing a loaded frame makes a separate local copy.</p></div>
-    <div class="motion-controls"><label for="motionSlider">Saved position <output id="motionFrameReadout">0</output></label><input id="motionSlider" type="range" min="0" max="0" value="0" step="1"><p><strong id="motionScore">93</strong> triangular yards in the saved frame</p><p><strong id="motionChanged">+0 / −0</strong> gained / lost relative to the original 93</p><button id="resetMotion" type="button">Load original 93 frame</button></div>
+    <div><p class="eyebrow">Fence 1 · 41 saved positions</p><h2 id="motionTitle">Slide one fence and the count drops.</h2><p>Drag the slider to move fence 1 through 41 saved positions. Only three of them, at offsets −2, 0 and +2, keep all 93 yards. Each saved position is recounted when it loads. Moving any fence starts your own copy, which is counted live.</p></div>
+    <div class="motion-controls"><label for="motionSlider">Saved position <output id="motionFrameReadout">0</output></label><input id="motionSlider" type="range" min="0" max="0" value="0" step="1"><p><strong id="motionScore">93</strong> yards in this saved position (before your edits)</p><p><strong id="motionChanged">+0 / −0</strong> yards gained / lost in this saved position versus the original 93</p><button id="resetMotion" type="button">Back to the original position</button></div>
   </section>
-  <footer><p>Lines continue infinitely beyond the board. Panning, zooming and focusing a face change only the view.</p><a href="index.html">Read the experiment story</a> · <a href="beaver.html">Program the tape robot →</a></footer>
+  <footer><p>The fences keep going past the edge of the board. Panning and zooming change only what you see.</p><a href="index.html">Read the experiment story</a> · <a href="beaver.html">Program the tape robot →</a></footer>
 </main>
 <script src="data.js"></script>
 <script src="fence-geometry.js"></script>

@@ -18,7 +18,7 @@
 .readout { padding: 1rem 1.4rem; border-top: 1px solid var(--line); }
 .readout p { max-width: 65rem; margin: .4rem 0; }
 .outcome { color: var(--red); font-weight: 700; }
-.below { display: grid; grid-template-columns: .9fr 1.1fr; gap: 3rem; padding: 2.5rem 0; }
+.below { padding: 2rem 0; max-width: 48rem; }
 .lesson, .editor { min-width: 0; border-top: 2px solid var(--ink); padding-top: 1rem; }
 .lesson > p:not(.eyebrow), .editor > p:not(.eyebrow), .presets p { color: var(--soft); }
 .prediction { display: flex; flex-wrap: wrap; gap: .4rem; }
@@ -60,3 +60,22 @@ td select { width: 100%; padding: .2rem; font-size: .86rem; }
   th, td { padding-inline: .1rem; }
   .tape-cell small { font-size: .5rem; }
 }
+
+.action-strip { display: flex; flex-wrap: wrap; gap: .4rem; margin-top: 1.3rem; }
+.action-strip span { border: 1px solid var(--line); padding: .4rem .7rem; font-size: .9rem; background: var(--paper); }
+.action-strip span + span::before { content: '›'; padding-right: .65rem; color: var(--red); }
+.tape-cell.is-marked { background: #f2d5a9; }
+.tape-cell.just-written { box-shadow: inset 0 -4px var(--red); }
+.tape-cell.just-written::after { content: 'wrote'; position: absolute; bottom: -.95rem; left: 0; right: 0; font-size: .62rem; color: var(--red); }
+
+.prediction-panel { padding: .8rem 1.4rem; border-top: 1px solid var(--line); }
+.prediction-panel p { margin: .3rem 0 .6rem; font-size: .86rem; }
+.prediction-panel .presets { margin-top: .8rem; display: flex; flex-wrap: wrap; align-items: center; gap: .4rem .8rem; }
+.prediction-panel .presets select { width: auto; max-width: 100%; }
+.prediction-panel .presets p { display: none; }
+.explanation summary { cursor: pointer; color: var(--red); }
+@media(max-width: 760px) { .prediction-panel { padding-inline: .8rem; } }
+
+.intro { padding: 1.5rem 0; }
+.intro h1 { font-size: clamp(2.8rem, 4.7vw, 4rem); }
+.prediction-panel #predictionFeedback { margin-bottom: 0; }

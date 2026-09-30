@@ -8,9 +8,9 @@
   'use strict';
   const LIMIT = 100;
   const PRESETS = Object.freeze({
-    halt: { title: 'The six-step finisher', description: 'Predict: will the finisher halt, prove a repeat, or remain unknown by step 100?', table: [[[1, 'R', 'B'], [1, 'L', 'B']], [[1, 'L', 'A'], [1, 'R', 'H']]] },
-    cycle: { title: 'The wandering blank tape', description: 'Predict: will the blank wanderer halt, prove a repeat, or remain unknown by step 100?', table: [[[0, 'R', 'A'], [0, 'R', 'A']], [[0, 'R', 'A'], [0, 'R', 'A']]] },
-    unknown: { title: 'The growing trail', description: 'Predict: will the growing trail halt, prove a repeat, or remain unknown by step 100?', table: [[[1, 'R', 'A'], [1, 'R', 'A']], [[1, 'R', 'A'], [1, 'R', 'A']]] }
+    halt: { title: 'The six-step finisher', description: 'Will this checker see a halt, prove a repeat, or reach step 100 without either?', table: [[[1, 'R', 'B'], [1, 'L', 'B']], [[1, 'L', 'A'], [1, 'R', 'H']]] },
+    cycle: { title: 'The blank wanderer', description: 'Will this checker see a halt, prove a repeat, or reach step 100 without either?', table: [[[0, 'R', 'A'], [0, 'R', 'A']], [[0, 'R', 'A'], [0, 'R', 'A']]] },
+    unknown: { title: 'The growing trail', description: 'Will this checker see a halt, prove a repeat, or reach step 100 without either?', table: [[[1, 'R', 'B'], [1, 'R', 'H']], [[1, 'R', 'A'], [1, 'R', 'A']]] }
   });
   function validateTable(table) {
     if (!Array.isArray(table) || table.length !== 2 || table.some(row => !Array.isArray(row) || row.length !== 2)) throw new Error('Exactly two state rows with two symbol rules each are required.');

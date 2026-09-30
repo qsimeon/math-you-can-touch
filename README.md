@@ -1,6 +1,6 @@
 # Math You Can Touch
 
-An offline playground for triangular regions made by straight lines and a two-state tape robot. Start with four fences, change one, and watch the triangular faces change. Then program the robot and inspect each read, write, move and state change.
+An offline playground for triangular regions made by straight lines and a two-state tape robot. Start with four fences, change one, and watch the triangular faces change. Then program the robot and inspect each read, write, move and state change. The project source repository is private; this package supports a local-only demo and makes no hosted-demo or public project-source claim.
 
 ## Open the playgrounds
 
@@ -14,19 +14,19 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory site
 
 ### A five-minute visit
 
-1. Open the fence playground. Choose a fence, drag its round handle, or use the Slide and Rotate buttons. The exact triangular-face count updates after a valid move. Undo restores the previous arrangement.
-2. Load the published 93-face construction. It is an editable copy of prior art. The separate saved-frame slider loads 41 previously checked positions. Pan, zoom and Focus face change only the view.
+1. Open the fence playground. Drag a fence to slide it, or drag its red turn handle to rotate it around the center dot. You can also use the Slide and Turn buttons. The count updates after a valid move. Undo brings the previous drawing back.
+2. Choose Explore 93 yards to edit a copy of Bader’s published construction, reconstructed from Pavlo Savchuk’s LineOrder drawing. Click a shaded yard or use Previous yard and Next yard to see its three fences. The separate slider loads 41 saved positions. Pan, zoom and Zoom to yard change only the view.
 3. Open the robot. Predict its outcome, step through the six-step example, then change a rule. A halt, a complete configuration repeated up to translation, and an unresolved 100-step cutoff have separate outcomes.
 
 ## What the examples establish
 
 The 18-line examples have 16, 76 and 93 triangular faces. Each line is represented by exact integer coefficients `[a,b,c]` for `a*x+b*y+c=0`. Two independently implemented Python methods agree on the complete sets of faces. The browser uses integer arithmetic, with regression checks against both Python methods.
 
-The 93-face example reproduces a published construction attributed to Johannes Bader. It has three parallel pairs and no triple intersections. It is not a new result or a proof of optimality. The story summarizes a 6,000-change search that did not improve 93. This repository verifies the saved constructions but does not reproduce that search.
+The 93-face example reproduces Johannes Bader’s published construction from Pavlo Savchuk’s LineOrder drawing. It has three parallel pairs and no triple intersections. It is not a new result or a proof of optimality. The story reports a 6,000-change saved search that did not improve 93. Its private replay evidence is not included in this package.
 
-The robot uses two states, two symbols, an initially blank infinite tape and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. Unresolved cases prevent this experiment from proving a maximum. Six-state Busy Beaver research is separate.
+The robot uses two states, two symbols, an initially blank infinite tape and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. Those 5,912 tables remain unresolved by this checker. The [known two-state theorem](https://mathworld.wolfram.com/BusyBeaver.html) says a halting robot in this model stops within six steps, so they never halt. This experiment does not prove that theorem. Six-state Busy Beaver research is separate.
 
-There is no new mathematical record, completed Lean geometric proof or official Autolab evaluation in this project.
+Construction exact checks are complete; no Lean geometric proof is included. There is no new mathematical record or official Autolab evaluation in this project.
 
 ## Run the checks
 

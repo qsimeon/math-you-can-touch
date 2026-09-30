@@ -34,7 +34,7 @@ p { line-height: 1.6; }
 .hint, .source-note { color: var(--soft); font-size: .88rem; }
 .notice { padding: 1rem; border: 1px solid var(--red); }
 .skip, .skip-link { position: fixed; top: .5rem; transform: translateY(-200%); left: 1rem; z-index: 10; background: var(--ink); color: var(--paper); padding: .8rem; }
-.skip:focus, .skip-link:focus { transform: none; }
+.skip:focus-visible, .skip-link:focus-visible { transform: none; }
 footer { border-top: 1px solid var(--line); padding: 1rem 0 2.5rem; font-size: .9rem; }
 footer p { color: var(--soft); }
 @media(max-width: 760px) {

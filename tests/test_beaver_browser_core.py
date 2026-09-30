@@ -47,6 +47,7 @@ if(old.step!==0||old.ones.length!==0||old.seen['A|'][0]!==0)throw Error('mutated
 if(next.step!==1||next.head!==1||next.state!=='B'||next.ones[0]!==0||JSON.stringify(next.action)!==JSON.stringify({from:'A',read:0,write:1,move:'R',next:'B',at:0,head:1}))throw Error('first action mismatch');
 if(C.simulate(halt.table).steps!==6||C.simulate(halt.table).ones!==4)throw Error('halting mismatch');
 if(C.simulate(cycle.table).repeat.shift!==1||C.simulate(cycle.table).repeat.period!==1)throw Error('repeat mismatch');
+if(!unknown.table.flat().some(rule=>rule[2]==='H'))throw Error('cutoff preset needs a halt rule');
 if(C.simulate(unknown.table).status!=='UNKNOWN_AT_LIMIT')throw Error('cutoff conflated with proof');
 for(const value of [0,-1,101,1.1]){try{C.advance(halt.table,old,value);throw Error('invalid bound accepted')}catch(e){if(e.message==='invalid bound accepted')throw e;}}
 console.log('step contract passed');"""
@@ -83,6 +84,8 @@ class BeaverPageTests(unittest.TestCase):
             page.set_viewport_size({'width': 390, 'height': 850})
             page.locator('[data-predict="HALTED"]').click()
             page.locator('#step').click()
+            self.assertEqual(['Read 0', 'Write 1', '← Move left', 'Use state A'], page.locator('#actionStrip span').all_inner_texts())
+            self.assertEqual(1, page.locator('.tape-cell.just-written').count())
             self.assertIn('read 0 at square 0', page.locator('#narration').inner_text())
             self.assertIn('wrote 1, moved right to square 1', page.locator('#narration').inner_text())
             self.assertIn('state B', page.locator('#stepReadout').inner_text())
@@ -95,6 +98,7 @@ class BeaverPageTests(unittest.TestCase):
             page.clock.run_for(3000)
             self.assertIn('Step 6', page.locator('#stepReadout').inner_text())
             self.assertIn('Halted at step 6', page.locator('#outcome').inner_text())
+            self.assertIn('has stopped', page.locator('#actionStrip').inner_text())
             self.assertIn('prediction matched', page.locator('#predictionFeedback').inner_text())
             self.assertTrue(page.locator('#step').is_disabled())
             page.locator('#back').click()
@@ -104,6 +108,7 @@ class BeaverPageTests(unittest.TestCase):
             page.locator('#step').click()
             outcome = page.locator('#outcome').inner_text()
             self.assertIn('Proved repeat: steps 0 and 1', outcome)
+            self.assertIn('will not halt', page.locator('#actionStrip').inner_text())
             self.assertIn('same complete set of 1s', outcome)
             self.assertIn('identical rules apply after translation', outcome)
             self.assertTrue(page.locator('#cycleCompare').is_visible())
@@ -119,8 +124,10 @@ class BeaverPageTests(unittest.TestCase):
             page.locator('#run').click()
             page.clock.run_for(50000)
             self.assertIn('Step 100', page.locator('#stepReadout').inner_text())
-            self.assertIn('Unknown at the 100-step limit', page.locator('#outcome').inner_text())
-            self.assertIn('does not prove', page.locator('#outcome').inner_text())
+            self.assertIn('Unresolved by this checker at step 100', page.locator('#outcome').inner_text())
+            self.assertIn('known two-state result', page.locator('#actionStrip').inner_text())
+            self.assertIn('known two-state theorem shows this robot never halts', page.locator('#outcome').inner_text())
+            self.assertIn('The checker does not use that theorem', page.locator('.explanation').inner_text())
             self.assertIn('100 marked squares', page.locator('#tapeSummary').inner_text())
             page.locator('#ruleRows tr').first.locator('select').first.select_option('0')
             self.assertIn('Step 0', page.locator('#stepReadout').inner_text())

@@ -6,7 +6,7 @@
   const ns = 'http://www.w3.org/2000/svg';
   const tag = (name, attributes = {}) => { const node = document.createElementNS(ns, name); Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value)); return node; };
   const clone = (lines) => lines.map((line) => [...line]);
-  const state = { snapshots:[], snapshot:null, lines:[], original:[], selected:0, undo:[], mode:'edit', drag:null, pan:{x:0,y:0}, motion:null, motionIndex:null, frame:null, faces:[], selectedFace:null, kind:'warmup', origin:'warmup', sourceLabel:'', map:null, zoom:1, viewBounds:null };
+  const state = { snapshots:[], snapshot:null, lines:[], original:[], selected:0, undo:[], mode:'edit', drag:null, pan:{x:0,y:0}, motion:null, motionIndex:null, frame:null, faces:[], selectedFace:null, kind:'warmup', origin:'warmup', sourceLabel:'', map:null, zoom:1, viewBounds:null, pivot:null, suppressClick:false, turnVector:null };
   const number = (value) => Number(value);
   const rawLines = (record) => record.lines.map((row) => row.map(BigInt));
   const formatOffset = (offset) => Number(offset) > 0 ? `+${offset}` : String(offset);
@@ -42,32 +42,34 @@
 
   function clearFace() {
     state.selectedFace = null;
-    el.faceTitle.textContent = 'Choose a triangular yard';
-    el.faceExplanation.textContent = 'Click a shaded triangular yard to highlight the three fences that enclose it.';
+    el.faceTitle.textContent = 'Pick a yard';
+    el.faceExplanation.textContent = 'Click a shaded yard to see its three fences.';
     el.supportLines.replaceChildren();
     el.support.hidden = true;
   }
 
+  const yardCount = score => `${score} triangular ${score === 1 ? 'yard' : 'yards'}`;
+
   function sourceDescription(score) {
-    if (state.kind === 'published') return `Edited version of the supplied 93-face prior-art construction: ${score} triangular yards. This live exploration makes no novelty or optimality claim.`;
-    if (state.kind === 'editedMotion') return `Edited copy of saved motion frame at offset ${formatOffset(state.frame.offset)}: ${score} triangular yards. Reset restores the supplied exact frame.`;
-    if (state.kind === 'motion') return `Saved motion frame at offset ${formatOffset(state.frame.offset)}: ${score} triangular yards, rendered from its supplied exact line equations.`;
-    if (state.kind === 'editedSnapshot') return `Edited copy of saved ${state.sourceLabel} arrangement: ${score} triangular yards. Reset restores the supplied exact arrangement.`;
-    if (state.kind === 'snapshot') return `Saved ${state.sourceLabel} arrangement: ${score} triangular yards, rendered from its supplied exact line equations.`;
-    return `Live warm-up: ${score} triangular yards. The count is recomputed from exact integer lines, not from the screen drawing.`;
+    if (state.kind === 'published') return `Your copy of Bader’s 93: ${yardCount(score)}, counted live as you edit.`;
+    if (state.kind === 'editedMotion') return `Your edit of the position at offset ${formatOffset(state.frame.offset)}: ${yardCount(score)}, counted live. Reset brings back the saved position.`;
+    if (state.kind === 'motion') return `Saved position at offset ${formatOffset(state.frame.offset)}: ${yardCount(score)}, recounted exactly when it loaded.`;
+    if (state.kind === 'editedSnapshot') return `Your edit of saved ${state.sourceLabel}: ${yardCount(score)}, counted live. Reset brings back the saved drawing.`;
+    if (state.kind === 'snapshot') return `Saved ${state.sourceLabel}: ${yardCount(score)}, recounted exactly when it loaded.`;
+    return `Live warm-up: ${yardCount(score)}. The count updates as you move.`;
   }
 
   function scoreLabel(score) {
-    if (state.kind === 'published') return `Edited published construction: ${score} triangular yards · exact count`;
-    if (state.kind === 'editedMotion') return `Edited copy of saved frame ${formatOffset(state.frame.offset)}: ${score} triangular yards · exact count`;
-    if (state.kind === 'motion') return `Saved frame ${formatOffset(state.frame.offset)}: ${score} triangular yards · exact count`;
-    if (state.kind === 'editedSnapshot') return `Edited copy of saved ${state.sourceLabel}: ${score} triangular yards · exact count`;
-    if (state.kind === 'snapshot') return `Saved ${state.sourceLabel}: ${score} triangular yards · exact count`;
-    return `${score} triangular yards · exact count`;
+    if (state.kind === 'published') return `Your copy of Bader’s 93: ${yardCount(score)}`;
+    if (state.kind === 'editedMotion') return `Edited copy of saved position ${formatOffset(state.frame.offset)}: ${yardCount(score)}`;
+    if (state.kind === 'motion') return `Saved position ${formatOffset(state.frame.offset)}: ${yardCount(score)}`;
+    if (state.kind === 'editedSnapshot') return `Your edit of saved ${state.sourceLabel}: ${yardCount(score)}`;
+    if (state.kind === 'snapshot') return `Saved ${state.sourceLabel}: ${yardCount(score)}`;
+    return `${yardCount(score)}`;
   }
 
   function updateExact() {
-    el.tableTitle.textContent = state.lines.length === 4 ? '4 fences. A small warm-up.' : `${state.lines.length} fences. A delicate balance.`;
+    el.tableTitle.textContent = state.lines.length === 4 ? '4 fences. A small warm-up.' : `${state.lines.length} fences.`;
     const report = G.score(state.lines);
     state.faces = report.faces;
     el.score.textContent = scoreLabel(report.score);
@@ -78,15 +80,17 @@
 
   function drawSvg({ geometryChanged = false } = {}) {
     let report;
-    try { report = updateExact(); } catch (error) { el.score.textContent = `Move rejected: ${error.message}`; return false; }
+    try { report = updateExact(); } catch (error) { el.score.textContent = `That move was refused: ${error.message}`; return false; }
     if (geometryChanged) clearFace();
+    setMode(state.mode);
     const map = mapFor(state.lines);
     state.map = map;
     el.faces.replaceChildren(); el.lines.replaceChildren(); el.handles.replaceChildren();
+    let selectedHit = null;
     report.faces.forEach((triple, index) => {
       const points = G.vertices(state.lines, triple).map(([x,y]) => `${map.x(x)},${map.y(y)}`).join(' ');
       const polygon = tag('polygon', { points, class:`yard${index === state.selectedFace ? ' is-selected' : ''}`, 'data-face':index });
-      polygon.addEventListener('click', () => showFace(index));
+      polygon.addEventListener('click', () => { if (!state.suppressClick) showFace(index); });
       el.faces.append(polygon);
     });
     state.lines.forEach((line, index) => {
@@ -94,26 +98,47 @@
       if (!end) return;
       const selected = index === state.selected, supporting = state.selectedFace !== null && state.faces[state.selectedFace]?.includes(index);
       const path = tag('line', { x1:map.x(end[0][0]), y1:map.y(end[0][1]), x2:map.x(end[1][0]), y2:map.y(end[1][1]), class:`fence ${selected ? 'is-selected' : ''} ${supporting ? 'is-support' : ''}`, 'data-index':index, tabindex:'-1' });
-      path.addEventListener('click', () => select(index));
+      const hit = path.cloneNode(); hit.setAttribute('class', 'fence-hit'); hit.setAttribute('aria-label', `Drag fence ${index + 1} to move it`);
+      if (selected) selectedHit = hit;
+      else el.lines.append(hit);
       el.lines.append(path);
       if (selected) {
-        const middleX = (end[0][0] + end[1][0]) / 2, middleY = (end[0][1] + end[1][1]) / 2;
-        el.handles.append(tag('circle', { cx:map.x(middleX), cy:map.y(middleY), r:11, class:'fence-handle', 'aria-label':'Drag selected fence handle' }));
+        const pivot = state.pivot || [(end[0][0] + end[1][0]) / 2, (end[0][1] + end[1][1]) / 2];
+        state.pivot = pivot;
+        const cx = map.x(pivot[0]), cy = map.y(pivot[1]);
+        const [a,b] = line.map(number), norm = Math.hypot(a,b);
+        let dx = b / norm, dy = a / norm;
+        if (state.turnVector && dx*state.turnVector[0]+dy*state.turnVector[1] < 0) { dx = -dx; dy = -dy; }
+        state.turnVector = [dx,dy];
+        const screenScale = Math.max(.1, el.svg.getBoundingClientRect().width / 720);
+        // Keep the drawing small and touch targets generous at every viewport size.
+        const radius = 50 / screenScale, hitRadius = 22 / screenScale;
+        const tx = cx + dx * radius, ty = cy + dy * radius;
+        el.handles.append(tag('circle', { cx, cy, r:hitRadius, class:'handle-hit move-hit', 'aria-label':'Drag to move this fence' }));
+        el.handles.append(tag('circle', { cx, cy, r:5 / screenScale, class:'fence-handle' }));
+        el.handles.append(tag('circle', { cx:tx, cy:ty, r:hitRadius, class:'handle-hit turn-hit', 'aria-label':'Drag to turn this fence' }));
+        el.handles.append(tag('circle', { cx:tx, cy:ty, r:13 / screenScale, class:'turn-handle' }));
+        const icon = tag('text', { x:tx, y:ty, class:'handle-icon', 'text-anchor':'middle', 'dominant-baseline':'central', 'font-size':17 / screenScale }); icon.textContent = '↻'; el.handles.append(icon);
       }
     });
+    if (selectedHit) el.lines.append(selectedHit);
+    $('selectedEquation').textContent = `Fence ${state.selected + 1}: ${lineText(state.lines[state.selected])}`;
     renderList();
     el.next.disabled = el.previous.disabled = $('focusFace').disabled = !state.faces.length;
     return true;
   }
 
-  function select(index) { state.selected = index; drawSvg(); }
+  function select(index, { focusBoard = false } = {}) {
+    state.selected = index; state.pivot = null; state.turnVector = null; drawSvg();
+    if (focusBoard) el.svg.focus({ preventScroll:true });
+  }
 
   function showFace(index) {
     if (!state.faces.length) return;
     state.selectedFace = ((index % state.faces.length) + state.faces.length) % state.faces.length;
     const face = state.faces[state.selectedFace];
-    el.faceTitle.textContent = `Face ${state.selectedFace + 1}`;
-    el.faceExplanation.textContent = 'These three exact supporting equations enclose this triangular face. No other fence crosses its interior.';
+    el.faceTitle.textContent = `Yard ${state.selectedFace + 1}`;
+    el.faceExplanation.textContent = 'These three fences form this yard. No other fence cuts through it.';
     el.supportLines.replaceChildren();
     face.forEach((lineIndex) => { const item = document.createElement('li'); item.textContent = `Fence ${lineIndex + 1}: ${lineText(state.lines[lineIndex])}`; el.supportLines.append(item); });
     el.support.hidden = false;
@@ -124,18 +149,17 @@
     el.list.replaceChildren();
     state.lines.forEach((line, index) => {
       const button = document.createElement('button');
-      button.type = 'button'; button.textContent = `Fence ${index + 1}: ${lineText(line)}`;
+      button.type = 'button'; button.textContent = `Fence ${index + 1}`; button.title = lineText(line); button.dataset.equation = lineText(line);
       button.setAttribute('aria-pressed', String(index === state.selected));
-      button.addEventListener('click', () => select(index));
+      button.addEventListener('click', () => select(index, { focusBoard:true }));
       const item = document.createElement('li'); item.append(button); el.list.append(item);
     });
     el.undo.disabled = !state.undo.length;
   }
 
   function reject(error, baseline) {
-    state.lines = clone(baseline);
-    el.score.textContent = `Move rejected: ${error.message}`;
-    renderList();
+    state.lines = clone(baseline); state.pivot = null; drawSvg({geometryChanged:true});
+    el.hint.textContent = error.message.includes('proportional duplicate') ? 'That would put two fences on the same line. The fence is unchanged.' : `That move can't be counted: ${error.message}. The fence is unchanged.`;
     return false;
   }
 
@@ -147,88 +171,141 @@
 
   function applyCandidate(candidate, baseline, { recordUndo = false } = {}) {
     try { G.score(candidate); } catch (error) { return reject(error, baseline); }
-    if (recordUndo) state.undo.push({ lines:clone(baseline), kind:state.kind });
+    if (recordUndo && candidate.some((line,i) => line.some((value,j) => value !== baseline[i][j]))) state.undo.push({ lines:clone(baseline), kind:state.kind });
     state.lines = candidate;
     markEdited();
     return drawSvg({ geometryChanged:true });
   }
 
   function moveBy(pointer, baseline) {
-    const map = mapFor(baseline), [a,b,c] = baseline[state.selected];
+    const map = mapFor(baseline), [a,b] = baseline[state.selected];
     const dx = (pointer.x - state.drag.point.x) / map.scale, dy = -(pointer.y - state.drag.point.y) / map.scale;
     const amount = BigInt(Math.round(-(number(a) * dx + number(b) * dy)));
-    if (!amount) return false;
+    state.pivot = null;
     try { return applyCandidate(G.translateParallel(baseline, state.selected, amount), baseline); } catch (error) { return reject(error, baseline); }
   }
 
   function svgPoint(event) { return new DOMPoint(event.clientX, event.clientY).matrixTransform(el.svg.getScreenCTM().inverse()); }
 
+  function yardAt(point) {
+    const inside = (a, b, c) => {
+      const ab = (b[0] - a[0]) * (point.y - a[1]) - (b[1] - a[1]) * (point.x - a[0]);
+      const bc = (c[0] - b[0]) * (point.y - b[1]) - (c[1] - b[1]) * (point.x - b[0]);
+      const ca = (a[0] - c[0]) * (point.y - c[1]) - (a[1] - c[1]) * (point.x - c[0]);
+      const epsilon = 1e-6;
+      return (ab > epsilon && bc > epsilon && ca > epsilon) || (ab < -epsilon && bc < -epsilon && ca < -epsilon);
+    };
+    return state.faces.findIndex((face) => inside(...G.vertices(state.lines, face).map(([x,y]) => [state.map.x(x), state.map.y(y)])));
+  }
+
   function finishDrag(event, canceled) {
     if (!state.drag || event.pointerId !== state.drag.id) return;
-    try { el.svg.releasePointerCapture(event.pointerId); } catch (_) { }
     const drag = state.drag;
     state.drag = null;
-    if (canceled) { state.lines = clone(drag.lines); state.kind = drag.kind; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); return; }
-    if (drag.changed) state.undo.push({ lines:clone(drag.lines), kind:drag.kind });
+    try { el.svg.releasePointerCapture(event.pointerId); } catch (_) { }
+    state.suppressClick = drag.moved;
+    if (canceled) {
+      state.lines = clone(drag.lines); state.kind = drag.kind; state.pan = drag.pan; state.pivot = drag.pivot;
+      applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); return;
+    }
+    if (!drag.moved) {
+      const yard = yardAt(svgPoint(event));
+      if (yard >= 0) { state.suppressClick = true; showFace(yard); return; }
+    }
+    if (state.lines.some((line,i) => line.some((value,j) => value !== drag.lines[i][j]))) {
+      state.undo.push({ lines:clone(drag.lines), kind:drag.kind });
+    } else { state.kind = drag.kind; applyWorkbench(state.kind, state.sourceLabel); }
     renderList();
+  }
+
+  function rotatedAt(baseline, angle, pivot) {
+    // Pointer input sets an approximate angle. Bound coefficients for repeated turns;
+    // verify every resulting snapped integer equation with the exact scorer.
+    const precision = Math.max(1e6, state.map.scale * 1e6);
+    const a = Math.round(Math.cos(angle) * precision), b = Math.round(Math.sin(angle) * precision);
+    const candidate = clone(baseline);
+    candidate[state.selected] = [BigInt(a), BigInt(b), BigInt(Math.round(-a * pivot[0] - b * pivot[1]))];
+    return G.validate(candidate);
+  }
+
+  function turnBy(point, drag) {
+    const cx = state.map.x(drag.pivot[0]), cy = state.map.y(drag.pivot[1]);
+    if (Math.hypot(point.x-cx, point.y-cy) < 12) return false;
+    const start = Math.atan2(drag.point.y-cy, drag.point.x-cx);
+    const now = Math.atan2(point.y-cy, point.x-cx);
+    const [a,b] = drag.lines[state.selected].map(number);
+    const angle = Math.atan2(b,a) - (now-start);
+    try { return applyCandidate(rotatedAt(drag.lines, angle, drag.pivot), drag.lines); }
+    catch (error) { return reject(error, drag.lines); }
   }
 
   function attachEditor() {
     el.svg.addEventListener('pointerdown', (event) => {
-      const handle = event.target.closest?.('.fence-handle');
-      if (state.mode === 'edit' && !handle) return;
+      if (event.button !== 0 || state.drag) return;
+      state.suppressClick = false;
+      const handle = event.target.closest?.('.fence-handle,.turn-handle,.handle-hit');
+      const line = event.target.closest?.('[data-index]');
       event.preventDefault();
-      const point = svgPoint(event);
-      el.svg.setPointerCapture(event.pointerId);
-      state.drag = { id:event.pointerId, point, lines:clone(state.lines), kind:state.kind, pan:{...state.pan}, moved:false, changed:false };
+      const point = svgPoint(event), yard = yardAt(point), turning = (handle?.classList.contains('turn-handle') || handle?.classList.contains('turn-hit'));
+      if (yard < 0 && line && Number(line.dataset.index) !== state.selected) select(Number(line.dataset.index));
+      el.svg.focus({preventScroll:true});
+      try { el.svg.setPointerCapture(event.pointerId); } catch (_) { }
+      state.drag = { id:event.pointerId, point, lines:clone(state.lines), kind:state.kind,
+        pan:{...state.pan}, pivot:state.pivot && [...state.pivot], action:state.mode === 'pan' ? 'pan' : turning ? 'turn' : handle || line ? 'move' : 'select', moved:false };
     });
     el.svg.addEventListener('pointermove', (event) => {
       if (!state.drag || event.pointerId !== state.drag.id) return;
       const point = svgPoint(event), deltaX = point.x - state.drag.point.x, deltaY = point.y - state.drag.point.y;
       state.drag.moved ||= Math.abs(deltaX) + Math.abs(deltaY) > 3;
       if (!state.drag.moved) return;
-      if (state.mode === 'pan') {
+      if (state.drag.action === 'pan') {
         state.pan = { x:state.drag.pan.x + deltaX, y:state.drag.pan.y + deltaY };
-        drawSvg();
-        return;
+        drawSvg(); return;
       }
-      state.lines = clone(state.drag.lines);
-      state.drag.changed = moveBy(point, state.drag.lines) || state.drag.changed;
+      if (state.drag.action === 'select') return;
+      if (state.drag.action === 'turn') turnBy(point, state.drag);
+      else moveBy(point, state.drag.lines);
     });
     el.svg.addEventListener('pointerup', (event) => finishDrag(event, false));
     el.svg.addEventListener('pointercancel', (event) => finishDrag(event, true));
+    el.svg.addEventListener('lostpointercapture', (event) => finishDrag(event, true));
     el.edit.onclick = () => setMode('edit'); el.pan.onclick = () => setMode('pan');
     $('slideLeft').onclick = () => slide(-1); $('slideRight').onclick = () => slide(1);
-    $('zoomIn').onclick = () => { state.zoom = Math.min(64, state.zoom * 1.5); drawSvg(); };
-    $('zoomOut').onclick = () => { state.zoom = Math.max(.25, state.zoom / 1.5); drawSvg(); };
-    $('fitView').onclick = () => { state.viewBounds = bounds(state.lines); state.zoom = 1; state.pan = {x:0,y:0}; drawSvg(); };
+    $('zoomIn').onclick = () => { state.zoom = Math.min(64, state.zoom * 1.5); state.pivot = null; drawSvg(); };
+    $('zoomOut').onclick = () => { state.zoom = Math.max(.25, state.zoom / 1.5); state.pivot = null; drawSvg(); };
+    $('fitView').onclick = () => { state.viewBounds = bounds(state.lines); state.pivot = null; state.zoom = 1; state.pan = {x:0,y:0}; drawSvg(); };
     $('focusFace').onclick = focusFace; $('warmup').onclick = loadWarmup;
     el.left.onclick = () => turn(-1); el.right.onclick = () => turn(1); el.published.onclick = loadPublished; el.download.onclick = downloadExact;
-    el.undo.onclick = () => { if (state.undo.length) { const previous = state.undo.pop(); state.lines = previous.lines; state.kind = previous.kind; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); } };
-    el.reset.onclick = () => { state.zoom = 1; state.viewBounds = bounds(state.original); state.lines = clone(state.original); state.kind = state.origin; state.undo = []; state.pan = { x:0, y:0 }; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); };
-    el.svg.addEventListener('keydown', (event) => {
+    el.undo.onclick = () => { if (state.undo.length) { const previous = state.undo.pop(); state.pivot = null; state.lines = previous.lines; state.kind = previous.kind; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); } };
+    el.reset.onclick = () => { state.pivot = null; state.zoom = 1; state.viewBounds = bounds(state.original); state.lines = clone(state.original); state.kind = state.origin; state.undo = []; state.pan = { x:0, y:0 }; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); };
+    el.svg.closest('.viewer-shell').addEventListener('keydown', (event) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
       if (event.key === 'ArrowDown' || event.key === 'ArrowRight') { event.preventDefault(); select((state.selected + 1) % state.lines.length); }
       if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') { event.preventDefault(); select((state.selected + state.lines.length - 1) % state.lines.length); }
       if (event.key === '[' || event.key === ']') { event.preventDefault(); slide(event.key === '[' ? -1 : 1); }
+      if (event.key.toLowerCase() === 'q' || event.key.toLowerCase() === 'e') { event.preventDefault(); turn(event.key.toLowerCase() === 'q' ? -1 : 1); }
       if (event.key.toLowerCase() === 'z' && state.undo.length) { event.preventDefault(); el.undo.click(); }
     });
   }
 
   function setMode(mode) {
     state.mode = mode;
+    el.svg.classList.toggle('is-panning', mode === 'pan');
     el.edit.setAttribute('aria-pressed', String(mode === 'edit')); el.pan.setAttribute('aria-pressed', String(mode === 'pan'));
-    el.hint.textContent = mode === 'edit' ? 'Edit mode: drag only the round handle to slide an exact parallel fence.' : 'Pan mode: drag the board to move the view. Fences will not change.';
+    el.hint.textContent = mode === 'edit' ? 'Drag a fence to slide it. Drag the red ↻ handle to turn it around the center dot.' : 'Drag the board to move the view. The fences stay put.';
   }
 
   function turn(amount) {
-    const baseline = clone(state.lines);
+    const baseline = clone(state.lines), [a,b] = baseline[state.selected].map(number);
+    if (!state.pivot) { el.hint.textContent = 'The selected fence is outside the view. Zoom out or choose a visible fence to turn it.'; return; }
     try {
-      const candidate = G.rotateRational(baseline, state.selected, BigInt(amount), 20n);
+      const candidate = rotatedAt(baseline, Math.atan2(b,a) - amount * Math.PI / 18, state.pivot);
       applyCandidate(candidate, baseline, { recordUndo:true });
     } catch (error) { reject(error, baseline); }
   }
 
   function slide(direction) {
+    state.pivot = null;
     const baseline = clone(state.lines), [a,b] = baseline[state.selected];
     const amount = BigInt(Math.round(direction * Math.hypot(number(a), number(b)) * 8 / state.map.scale)) || BigInt(direction);
     try { applyCandidate(G.translateParallel(baseline, state.selected, amount), baseline, { recordUndo:true }); }
@@ -242,36 +319,38 @@
     const xs = vertices.map(p => p[0]), ys = vertices.map(p => p[1]);
     const pad = Math.max(Math.max(...xs)-Math.min(...xs), Math.max(...ys)-Math.min(...ys), .001) * .3;
     state.viewBounds = [Math.min(...xs)-pad, Math.min(...ys)-pad, Math.max(...xs)+pad, Math.max(...ys)+pad];
-    state.zoom = 1; state.pan = {x:0,y:0}; drawSvg();
+    state.pivot = null; state.zoom = 1; state.pan = {x:0,y:0}; drawSvg();
   }
 
   function applyWorkbench(kind, label = '') {
     state.kind = kind;
     if (kind === 'published') {
-      el.eyebrow.textContent = 'Published 93 · editable copy'; el.workbenchTitle.textContent = 'Move any of the eighteen fences.';
-      el.workbenchDescription.textContent = 'This begins from the supplied 93-face published construction. Select any numbered fence, drag it parallel with a scale-aware screen mapping, or use a small exact rational rotation. The live score is computational evidence, not a novelty claim.'; el.reset.textContent = 'Reset published 93';
+      el.eyebrow.textContent = 'Bader’s 93 · your copy'; el.workbenchTitle.textContent = 'Move any of the 18 fences.';
+      el.workbenchDescription.textContent = 'This is your copy of Johannes Bader’s published 93-yard drawing. Edits here do not set a new record.'; el.reset.textContent = 'Reset Bader’s 93'
     } else if (kind === 'motion' || kind === 'editedMotion') {
       const edited = kind === 'editedMotion';
-      el.eyebrow.textContent = edited ? 'Edited saved motion frame' : 'Saved motion frame'; el.workbenchTitle.textContent = `Frame at offset ${formatOffset(state.frame.offset)}.`;
-      el.workbenchDescription.textContent = edited ? 'This is now a local edited copy. Reset restores the supplied exact frame.' : 'This is a supplied exact frame. Its fence equations and faces are rendered together; editing creates a separate local copy.'; el.reset.textContent = `Reset frame ${formatOffset(state.frame.offset)}`;
+      el.eyebrow.textContent = edited ? 'Saved position · your edit' : 'Saved position'; el.workbenchTitle.textContent = `Fence 1 at offset ${formatOffset(state.frame.offset)}.`;
+      el.workbenchDescription.textContent = edited ? 'You are editing your own copy. Reset brings back the saved position.' : 'This position was saved and checked ahead of time. Move any fence to start your own copy.'; el.reset.textContent = `Reset position ${formatOffset(state.frame.offset)}`;
     } else if (kind === 'snapshot' || kind === 'editedSnapshot') {
       const edited = kind === 'editedSnapshot';
-      el.eyebrow.textContent = edited ? 'Edited saved arrangement · local copy' : 'Saved arrangement · editable copy'; el.workbenchTitle.textContent = edited ? `Edited copy of ${label}.` : `Inspect ${label}.`;
-      el.workbenchDescription.textContent = edited ? 'This local edited copy is separate from the saved source. Reset restores the supplied exact arrangement.' : 'This is a supplied exact arrangement. Select a fence to explore a separate local copy; the saved source remains unchanged.'; el.reset.textContent = `Reset saved ${label}`;
+      el.eyebrow.textContent = edited ? 'Saved drawing · your edit' : 'Saved drawing'; el.workbenchTitle.textContent = edited ? `Your edit of ${label}.` : `${label}.`;
+      el.workbenchDescription.textContent = edited ? 'The saved drawing is unchanged. Reset brings it back.' : 'Move any fence to start your own copy. The saved drawing stays unchanged.'; el.reset.textContent = `Reset saved ${label}`;
     } else {
-      el.eyebrow.textContent = 'A four-line warm-up'; el.workbenchTitle.textContent = 'Make a triangle, then try to protect it.';
-      el.workbenchDescription.textContent = 'Choose any fence. In Edit mode, drag its round handle to slide it parallel. The rotation buttons apply a small rational rotation, then every move snaps to an exact integer equation before scoring.'; el.reset.textContent = 'Reset puzzle';
+      el.eyebrow.textContent = 'Warm-up'; el.workbenchTitle.textContent = 'Move a fence and watch yards appear and vanish.';
+      el.workbenchDescription.textContent = 'Turn a fence with its red handle until a yard disappears. Then press Undo to bring it back.'; el.reset.textContent = 'Reset warm-up';
     }
   }
 
   function loadSaved(kind, lines, { snapshot = null, frame = null, label = '' } = {}) {
-    state.snapshot = snapshot; state.motionIndex = frame ? state.motion.frames.indexOf(frame) : null; state.frame = frame; state.origin = kind; state.kind = kind; state.sourceLabel = label; state.original = clone(lines); state.lines = clone(lines); state.selected = 0; state.undo = []; state.pan = { x:0, y:0 }; state.zoom = 1; state.viewBounds = bounds(lines);
+    state.snapshot = snapshot; state.motionIndex = frame ? state.motion.frames.indexOf(frame) : null; state.frame = frame; state.origin = kind; state.kind = kind; state.sourceLabel = label; state.original = clone(lines); state.lines = clone(lines); state.selected = 0; state.turnVector = null; state.undo = []; state.pan = { x:0, y:0 }; state.pivot = null; state.zoom = 1; state.viewBounds = bounds(lines);
     applyWorkbench(kind, label); picker(); drawSvg({ geometryChanged:true });
+    $('quickWarmup').setAttribute('aria-pressed', String(kind === 'warmup'));
+    $('quickPublished').setAttribute('aria-pressed', String(kind === 'published'));
   }
 
   function loadPublished() {
     const published = state.snapshots.find((snapshot) => snapshot.score === 93);
-    if (published) loadSaved('published', rawLines(published));
+    if (published) loadSaved('published', rawLines(published), { label: 'Bader’s published construction' });
   }
 
   function loadWarmup() { loadSaved('warmup', PUZZLE); }
@@ -284,9 +363,9 @@
   function picker() {
     el.picker.replaceChildren();
     state.snapshots.forEach((snapshot, index) => {
-      const button = document.createElement('button'); button.type = 'button'; button.textContent = `${snapshot.label} · ${snapshot.score} faces`;
+      const button = document.createElement('button'); button.type = 'button'; button.textContent = `${snapshot.label} · ${snapshot.score} yards`;
       button.setAttribute('aria-pressed', String((state.kind === 'snapshot' || state.kind === 'editedSnapshot') && index === state.snapshot));
-      button.onclick = () => loadSaved('snapshot', rawLines(snapshot), { snapshot:index, label:snapshot.label }); el.picker.append(button);
+      button.onclick = () => loadSaved('snapshot', rawLines(snapshot), { snapshot:index, label:snapshot.score === 93 ? 'Bader’s 93-yard construction' : snapshot.label }); el.picker.append(button);
     });
   }
 
@@ -307,8 +386,14 @@
   }
 
   function init() {
-    if (!G || !window.LEARNING_DATA?.kobon?.snapshots) { el.readout.textContent = 'The local geometry data or exact scorer is unavailable.'; return; }
+    if (!G || !window.LEARNING_DATA?.kobon?.snapshots) { el.readout.textContent = 'The fence data did not load, so nothing was counted.'; return; }
     state.snapshots = window.LEARNING_DATA.kobon.snapshots; attachEditor(); setupMotion(); loadWarmup();
+    let boardWidth = el.svg.getBoundingClientRect().width;
+    new ResizeObserver(() => {
+      const width = el.svg.getBoundingClientRect().width;
+      if (width !== boardWidth && !state.drag) { boardWidth = width; drawSvg(); }
+    }).observe(el.svg);
+    $('quickWarmup').onclick = loadWarmup; $('quickPublished').onclick = loadPublished;
     el.next.onclick = () => showFace((state.selectedFace ?? -1) + 1); el.previous.onclick = () => showFace((state.selectedFace ?? 0) - 1);
   }
 

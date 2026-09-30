@@ -66,9 +66,9 @@
     const recovered = state.snapshots.find((snapshot) => snapshot.id === 'prior93');
     const pilot = state.data.kobon.pilot;
     const cards = [
-      { label: 'Original local search', value: `${formatNumber(original.score)} yards`, body: `The original search record contains ${formatNumber(original.score)} triangular yards among 18 infinite fences.` },
-      { label: 'Recovered published construction', value: `${formatNumber(recovered.score)} yards`, body: `The recovered published construction contains ${formatNumber(recovered.score)} triangular yards. It is a comparison point, not a new record.` },
-      { label: 'Pilot search', value: `${formatNumber(pilot.best)} yards`, body: `All ${formatNumber(pilot.runs.length)} pilot runs completed ${formatNumber(pilot.runs.reduce((total, run) => total + run.proposals, 0))} proposals. Each began at ${formatNumber(pilot.best)} and its best count remained there, and the saved replay passed. The pilot found no improvement.` }
+      { label: 'Our original search', value: `${formatNumber(original.score)} yards`, body: `Our local search produced ${formatNumber(original.score)} triangular yards with 18 fences.` },
+      { label: 'Bader’s published construction', value: `${formatNumber(recovered.score)} yards`, body: `Johannes Bader’s published construction has ${formatNumber(recovered.score)} triangular yards. We rebuilt it with exact integer coordinates from Pavlo Savchuk’s LineOrder drawing and recounted it.` },
+      { label: 'Trying to beat it', value: `${formatNumber(pilot.best)} yards`, body: `${formatNumber(pilot.runs.length)} fixed search runs reported ${formatNumber(pilot.runs.reduce((total, run) => total + run.proposals, 0))} bounded integer changes to Bader’s construction. None reported more than ${formatNumber(pilot.best)}. The private replay evidence is not included in this private source repository.` }
     ];
     cards.forEach((card) => {
       const article = document.createElement('article');
@@ -79,13 +79,15 @@
 
   function renderLesson() {
     const crossed = el.crossToggle.checked;
+    $('threeLineTitle').textContent = crossed ? 'A fourth fence splits the original yard.' : 'Three fences enclose one triangular yard.';
+    $('threeLineDescription').textContent = crossed ? 'The fourth fence cuts the original triangle. The smaller triangular piece counts, and the four-sided piece does not. One yard still counts.' : 'Three fences meet at three corners. No other fence cuts the triangle between them. One yard counts.';
     el.crossedLesson.toggleAttribute('hidden', !crossed);
     $('oldYard').classList.toggle('is-divided', crossed);
-    el.lessonCaption.textContent = crossed ? 'The fence y = 220 cuts the old yard. The faded large outline no longer names a single yard.' : 'Three infinite fences enclose one triangular yard.';
-    el.lessonExplanation.textContent = crossed ? 'The new fence meets the vertical fence at (140,220) and the diagonal fence at (240,220). The small triangle (140,120), (140,220), (240,220) is a valid yard. The old large triangle is divided, so it no longer counts as one face.' : 'The three fences meet at (140,120), (140,320), and (340,320). Their uncut triangular yard counts as one face.';
+    el.lessonCaption.textContent = crossed ? 'The new fence cuts the big yard, so it no longer counts.' : 'Three fences close in one yard.';
+    el.lessonExplanation.textContent = crossed ? 'The top piece is a smaller triangle with nothing crossing it, so it counts. The bottom piece has four sides, so it does not. The total is still one yard, but a different one.' : 'Three fences cross at three corners. Nothing cuts through the triangle between them, so it counts as one yard.';
   }
 
-  function snapshotName(snapshot) { return `${text(snapshot.label, snapshot.id)} · ${formatNumber(snapshot.score)} faces`; }
+  function snapshotName(snapshot) { return `${text(snapshot.label, snapshot.id)} · ${formatNumber(snapshot.score)} yards`; }
   function setSnapshot(index) {
     state.snapshotIndex = Math.max(0, Math.min(index, state.snapshots.length - 1));
     state.selectedFace = null; state.viewBounds = null;
@@ -99,7 +101,7 @@
       button.addEventListener('click', () => setSnapshot(index)); el.snapshotPicker.append(button);
     });
     const snapshot = currentSnapshot();
-    el.snapshotReadout.textContent = `${text(snapshot.label, snapshot.id)}: ${formatNumber(snapshot.score)} supplied faces; ${formatNumber(snapshot.lines.length)} exact line equations.`;
+    el.snapshotReadout.textContent = `${text(snapshot.label, snapshot.id)}: ${formatNumber(snapshot.score)} yards from ${formatNumber(snapshot.lines.length)} fences.`;
   }
   function rawBounds(snapshot) {
     const xs = [snapshot.bounds[0], snapshot.bounds[2], ...snapshot.triangles.flatMap((face) => face.vertices.map(([x]) => x))];
@@ -134,7 +136,7 @@
     clear(el.arrangementFaces); clear(el.arrangementLines);
     const selectedLines = selected === null ? [] : snapshot.triangles[selected].indices;
     if (state.facesVisible) snapshot.triangles.forEach((face, index) => {
-      const polygon = node('polygon', { points: face.vertices.map((point) => mapPoint(point, bounds).join(',')).join(' '), class: `arrangement-face${selected === index ? ' is-selected' : ''}`, tabindex: selected === index ? 0 : -1, role: 'button', 'aria-label': `Select face ${index + 1}, supported by lines ${face.indices.map((line) => line + 1).join(', ')}` });
+      const polygon = node('polygon', { points: face.vertices.map((point) => mapPoint(point, bounds).join(',')).join(' '), class: `arrangement-face${selected === index ? ' is-selected' : ''}`, tabindex: selected === index ? 0 : -1, role: 'button', 'aria-label': `Yard ${index + 1}, made by fences ${face.indices.map((line) => line + 1).join(', ')}` });
       polygon.addEventListener('click', () => selectFace(index));
       polygon.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectFace(index); } });
       el.arrangementFaces.append(polygon);
@@ -146,7 +148,7 @@
     });
     const title = el.arrangement.querySelector('title'); const description = el.arrangement.querySelector('desc');
     title.textContent = `${snapshotName(snapshot)} line arrangement`;
-    description.textContent = `${formatNumber(snapshot.lines.length)} exact line equations and ${formatNumber(snapshot.triangles.length)} supplied triangular faces. Select a colored face to inspect its three supporting line equations.`;
+    description.textContent = `${formatNumber(snapshot.lines.length)} fences and ${formatNumber(snapshot.triangles.length)} triangular yards. Select a shaded yard to see its three fences.`;
     el.zoomFace.disabled = selected === null;
   }
   function selectFace(index, focusList = false) {
@@ -158,14 +160,14 @@
     snapshot.triangles.forEach((face, index) => {
       const item = document.createElement('li'), button = document.createElement('button'); button.type = 'button';
       button.setAttribute('aria-pressed', String(index === state.selectedFace));
-      button.append(createHtml('span', `Face ${index + 1}`), createHtml('span', `L${face.indices.map((line) => line + 1).join(' · L')}`));
+      button.append(createHtml('span', `Yard ${index + 1}`), createHtml('span', `Fences ${face.indices.map((line) => line + 1).join(', ')}`));
       button.addEventListener('click', () => selectFace(index, true)); item.append(button); el.faceList.append(item);
     });
-    if (state.selectedFace === null) { el.faceExplanation.textContent = 'Choose a colored face, choose a numbered face, or focus the drawing and use the left and right arrow keys.'; el.supportDetails.hidden = true; return; }
+    if (state.selectedFace === null) { el.faceExplanation.textContent = 'Click a shaded yard or pick one from the list. With the drawing focused, the left and right arrow keys step through them.'; el.supportDetails.hidden = true; return; }
     const face = snapshot.triangles[state.selectedFace];
-    el.faceExplanation.textContent = `Face ${state.selectedFace + 1} is a supplied witness. Its three highlighted lines form its boundary; the record supplies its three vertices.`;
+    el.faceExplanation.textContent = `Yard ${state.selectedFace + 1} is one triangular yard. The three highlighted fences form its sides, and no other fence crosses it.`;
     el.supportDetails.hidden = false; clear(el.supportLines);
-    face.indices.forEach((lineIndex) => el.supportLines.append(createHtml('li', `L${lineIndex + 1}: [${snapshot.lines[lineIndex].join(', ')}]`)));
+    face.indices.forEach((lineIndex) => el.supportLines.append(createHtml('li', `Fence ${lineIndex + 1}: (${snapshot.lines[lineIndex][0]})x + (${snapshot.lines[lineIndex][1]})y + (${snapshot.lines[lineIndex][2]}) = 0`)));
   }
   function scaleBounds(factor) {
     const [xMin, yMin, xMax, yMax] = activeBounds(), cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
@@ -189,11 +191,11 @@
       const url = URL.createObjectURL(new Blob([payload], { type: 'application/json;charset=utf-8' }));
       const link = document.createElement('a'); link.href = url; link.download = 'solution.json'; link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-    } catch (error) { el.faceExplanation.textContent = `The exact line download could not be prepared: ${error.message}`; }
+    } catch (error) { el.faceExplanation.textContent = `The download failed: ${error.message}`; }
   }
 
   function methodLabel(method) {
-    return { translate: 'Slide a fence parallel', tilt: 'Change a fence direction or offset' }[method] || text(method);
+    return { translate: 'Slide one fence', tilt: 'Tilt or shift one fence' }[method] || text(method);
   }
   function roundedSeconds(seconds) { return `${seconds.toFixed(2)} s`; }
   function renderSearch() {
@@ -201,12 +203,12 @@
     clear(el.searchOutcome); clear(el.runRows);
     const best = state.data.kobon.pilot.best;
     const proposals = runs.reduce((total, run) => total + run.proposals, 0);
-    [{ value: formatNumber(runs.length), label: 'pilot runs completed' }, { value: formatNumber(best), label: 'best yard count, with no improvement' }, { value: formatNumber(proposals), label: 'proposals completed' }].forEach((item) => {
+    [{ value: formatNumber(runs.length), label: 'search runs' }, { value: formatNumber(best), label: 'best count, the same as the start' }, { value: formatNumber(proposals), label: 'changes tried' }].forEach((item) => {
       const box = document.createElement('div'); box.append(createHtml('strong', item.value), createHtml('span', item.label)); el.searchOutcome.append(box);
     });
     runs.forEach((run) => {
       const row = document.createElement('tr');
-      [run.id, methodLabel(run.method), run.initial, run.best, run.proposals, roundedSeconds(run.elapsed_seconds), 'Completed proposal budget'].forEach((value) => row.append(createHtml('td', display(value))));
+      [run.id, methodLabel(run.method), run.initial, run.best, run.proposals, roundedSeconds(run.elapsed_seconds), ({ proposal_budget:'Used all its tries', time_budget:'Reached its time limit', improved_witness:'Found a better drawing' }[run.stop_reason] || text(run.stop_reason))].forEach((value) => row.append(createHtml('td', display(value))));
       el.runRows.append(row);
     });
   }
@@ -228,8 +230,9 @@
       if (index === entry.head) { const robot = document.createElement('i'); robot.className = 'robot'; robot.setAttribute('aria-hidden', 'true'); cell.append(robot); }
       el.tape.append(cell);
     }
+    el.tape.setAttribute('aria-label', `Saved step ${entry.step}. State ${entry.state}. The robot is at square ${entry.head}. ${entry.ones.length ? `Marked squares: ${entry.ones.join(', ')}.` : 'No squares are marked.'} Every other square is blank.`);
     const limit = traceStateLimit();
-    el.traceStatus.textContent = `Saved step ${entry.step} · state ${entry.state} · state ${state.traceIndex + 1} of ${limit}`;
+    el.traceStatus.textContent = `Saved step ${entry.step} of ${trace()[limit - 1].step} · state ${entry.state}${entry.state === 'H' ? ' (halted)' : ''}`;
     el.traceStep.disabled = state.traceIndex >= limit - 1;
     renderTransitionTable(entry); renderBeaverSummary();
   }
@@ -238,44 +241,44 @@
     table.forEach((row, stateIndex) => row.forEach((instruction, read) => {
       const item = document.createElement('div'); const stateName = String.fromCharCode(65 + stateIndex); const active = entry.state === stateName && currentSymbol === read;
       item.className = `transition-row${active ? ' is-active' : ''}`;
-      const value = `${instruction[0]}, ${instruction[1]}, ${instruction[2]}`;
-      item.append(createHtml('span', `${stateName} reading ${read}`), createHtml('code', value)); el.transitionTable.append(item);
+      const value = `write ${instruction[0]}, move ${instruction[1] === 'L' ? 'left' : 'right'}, ${instruction[2] === 'H' ? 'halt' : `go to ${instruction[2]}`}`;
+      item.append(createHtml('span', `In ${stateName}, reading ${read}`), createHtml('code', value)); el.transitionTable.append(item);
     }));
   }
   function renderBeaverSummary() {
     clear(el.beaverSummary); const summary = state.data.busybeaver.summary;
     [
-      { label: 'halted', value: summary.halted },
-      { label: 'translation-cycle witnesses', value: summary.nonhalting },
-      { label: 'unknown at the step cap', value: summary.unknown },
-      { label: 'step cap', value: summary.step_limit }
+      { label: 'robots halted', value: summary.halted },
+      { label: 'proved to keep running by a complete repeated pattern', value: summary.nonhalting },
+      { label: 'unresolved by our checker at 100 steps', value: summary.unknown },
+      { label: 'steps per robot, at most', value: summary.step_limit }
     ].forEach((item) => {
       const paragraph = document.createElement('p'); paragraph.append(createHtml('strong', formatNumber(item.value)), document.createTextNode(` ${item.label}.`)); el.beaverSummary.append(paragraph);
     });
   }
-  function resetTrace() { stopTrace(); state.traceIndex = 0; renderBeaver(); el.traceFeedback.textContent = `Returned to saved step ${currentTrace().step}.`; }
+  function resetTrace() { stopTrace(); state.traceIndex = 0; renderBeaver(); el.traceFeedback.textContent = 'Back to the start.'; }
   function nextTrace() {
     const limit = traceStateLimit();
-    if (state.traceIndex >= limit - 1) { stopTrace(); el.traceFeedback.textContent = `Stopped after ${limit} saved states. The teaching cap is ${TRACE_CAP} states.`; return; }
-    state.traceIndex += 1; renderBeaver(); el.traceFeedback.textContent = `Showing saved step ${currentTrace().step}, state ${state.traceIndex + 1} of ${limit}.`;
+    if (state.traceIndex >= limit - 1) { stopTrace(); el.traceFeedback.textContent = `That is the end of the saved run, at step ${currentTrace().step}.`; return; }
+    state.traceIndex += 1; renderBeaver(); el.traceFeedback.textContent = `Step ${currentTrace().step}: the robot is now in state ${currentTrace().state}.`;
   }
-  function stopTrace() { if (state.traceTimer) window.clearInterval(state.traceTimer); state.traceTimer = null; el.traceRun.setAttribute('aria-pressed', 'false'); el.traceRun.textContent = 'Run at 4 steps per second'; }
+  function stopTrace() { if (state.traceTimer) window.clearInterval(state.traceTimer); state.traceTimer = null; el.traceRun.setAttribute('aria-pressed', 'false'); el.traceRun.textContent = 'Play'; }
   function runTrace() {
-    if (state.traceTimer) { stopTrace(); el.traceFeedback.textContent = 'Automatic playback paused.'; return; }
+    if (state.traceTimer) { stopTrace(); el.traceFeedback.textContent = 'Paused.'; return; }
     if (state.traceIndex >= traceStateLimit() - 1) state.traceIndex = 0;
-    el.traceRun.setAttribute('aria-pressed', 'true'); el.traceRun.textContent = 'Pause trace'; el.traceFeedback.textContent = 'Playing saved states at four per second.';
+    el.traceRun.setAttribute('aria-pressed', 'true'); el.traceRun.textContent = 'Pause'; el.traceFeedback.textContent = 'Playing four steps per second.';
     state.traceTimer = window.setInterval(nextTrace, 250);
   }
 
   function renderSources() {
     clear(el.sourceList); clear(el.limitationList);
     const uniqueSources = new Map(); sourceEntries().forEach((source) => { if (isHttpsUrl(source.url) && !uniqueSources.has(source.url)) uniqueSources.set(source.url, source); });
-    if (!uniqueSources.size) el.sourceList.append(createHtml('li', 'No source links were supplied.'));
+    if (!uniqueSources.size) el.sourceList.append(createHtml('li', 'No sources were included.'));
     uniqueSources.forEach((source) => { const item = document.createElement('li'), link = document.createElement('a'); link.href = source.url; link.target = '_blank'; link.rel = 'noreferrer'; link.textContent = text(source.title, source.url); item.append(link); el.sourceList.append(item); });
     const limits = Array.isArray(state.data.busybeaver.limitations) ? state.data.busybeaver.limitations : [];
-    if (!limits.length) el.limitationList.append(createHtml('li', 'No limitations were supplied.'));
-    limits.forEach((limit) => el.limitationList.append(createHtml('li', text(limit))));
-    const formal = state.data.formal || {}; el.formalStatus.textContent = `Formal status: ${text(formal.status)}. ${text(formal.explanation, 'No further formal-status explanation was supplied.')}`;
+    if (!limits.length) el.limitationList.append(createHtml('li', 'No limits were included.'));
+    limits.forEach((limit) => el.limitationList.append(createHtml('li', text(limit).replace('UNKNOWN_AT_LIMIT', 'Unresolved by this checker'))));
+    const formal = state.data.formal || {}; el.formalStatus.textContent = `Formal status: ${text(formal.status)}. ${text(formal.explanation, 'No details were saved.')}`;
   }
 
   function scenes() { return [...document.querySelectorAll('[data-scene]')]; }
@@ -291,17 +294,17 @@
 
   function bind() {
     el.crossToggle.addEventListener('change', renderLesson);
-    el.faceToggle.addEventListener('click', () => { state.facesVisible = !state.facesVisible; el.faceToggle.textContent = state.facesVisible ? 'Hide face color' : 'Show face color'; el.faceToggle.setAttribute('aria-pressed', String(state.facesVisible)); renderGeometry(); });
+    el.faceToggle.addEventListener('click', () => { state.facesVisible = !state.facesVisible; el.faceToggle.textContent = state.facesVisible ? 'Hide shading' : 'Show shading'; el.faceToggle.setAttribute('aria-pressed', String(state.facesVisible)); renderGeometry(); });
     el.zoomIn.addEventListener('click', () => scaleBounds(.7)); el.zoomOut.addEventListener('click', () => scaleBounds(1.4)); el.zoomFace.addEventListener('click', zoomSelectedFace);
     el.resetGeometry.addEventListener('click', () => { state.viewBounds = null; renderGeometry(); }); el.downloadGeometry.addEventListener('click', downloadLines);
-    el.arrangement.addEventListener('keydown', (event) => { if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || !currentSnapshot().triangles.length) return; event.preventDefault(); selectFace((state.selectedFace ?? 0) + (event.key === 'ArrowRight' ? 1 : -1)); });
+    el.arrangement.addEventListener('keydown', (event) => { if (event.metaKey || event.ctrlKey || event.altKey || !['ArrowLeft', 'ArrowRight'].includes(event.key) || !currentSnapshot().triangles.length) return; event.preventDefault(); event.stopPropagation(); selectFace((state.selectedFace ?? (event.key === 'ArrowRight' ? -1 : 0)) + (event.key === 'ArrowRight' ? 1 : -1)); });
     el.traceReset.addEventListener('click', resetTrace); el.traceStep.addEventListener('click', nextTrace); el.traceRun.addEventListener('click', runTrace);
     el.presentationToggle.addEventListener('click', () => setPresentation(!state.presentation)); el.previousScene.addEventListener('click', () => goScene(-1)); el.nextScene.addEventListener('click', () => goScene(1)); el.exitPresentation.addEventListener('click', () => setPresentation(false));
     document.addEventListener('keydown', (event) => { if (event.key === 'Escape' && state.presentation) setPresentation(false); else if (state.presentation && event.key === 'ArrowRight') { event.preventDefault(); goScene(1); } else if (state.presentation && event.key === 'ArrowLeft') { event.preventDefault(); goScene(-1); } });
   }
   function initialize() {
     const data = window.LEARNING_DATA;
-    if (!validData(data)) { showProblem('This local record is incomplete or inconsistent, so the exhibition has kept the drawings and counts hidden. Check data.js and reload.'); return; }
+    if (!validData(data)) { showProblem('The saved data failed its checks, so the page is hiding every number and drawing. Check data.js and reload.'); return; }
     state.data = data; state.snapshots = data.kobon.snapshots;
     const preferred = state.snapshots.findIndex((snapshot) => /our|76|best/i.test(`${snapshot.id} ${snapshot.label || ''}`)); state.snapshotIndex = preferred >= 0 ? preferred : 0;
     el.dataState.hidden = true; el.exhibition.hidden = false;
