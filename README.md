@@ -1,10 +1,18 @@
 # Math You Can Touch
 
-An offline playground for triangular regions made by straight lines and a two-state tape robot. Start with four fences, change one, and watch the triangular faces change. Then program the robot and inspect each read, write, move and state change. The project source repository is private; this package supports a local-only demo and makes no hosted-demo or public project-source claim.
+Two hands-on math playgrounds. Move a fence and watch triangular yards appear and disappear. Give a tiny tape robot four rules, predict whether it will stop, then follow each step.
 
-## Open the playgrounds
+Both run in a modern browser with JavaScript enabled, with no account or installation. You can also download the repository and use them offline.
 
-Clone or download this repository, then open `site/fences.html` in a modern browser. Open `site/beaver.html` for the robot or `site/index.html` for the experiment story. All runtime assets are included. No account, network access or installation is needed. Both demos are 2D. They use SVG and HTML, with no rendering library or GPU requirement. JavaScript is required for interaction.
+## Play online
+
+- [Move the fences](https://qsimeon.github.io/math-you-can-touch/fences.html): drag or rotate a fence, then inspect which triangular yards appear.
+- [Program the tape robot](https://qsimeon.github.io/math-you-can-touch/beaver.html): edit four rules, predict an outcome, and follow every step.
+- [Read the experiment story](https://qsimeon.github.io/math-you-can-touch/): see the geometry and the saved search results together.
+
+## Run offline
+
+Download this repository and open `site/fences.html`, `site/beaver.html`, or `site/index.html` in a modern browser. The 2D demos use local SVG and HTML assets. No account, network connection, rendering library, or GPU is needed. JavaScript is required for interaction.
 
 For browsers that restrict local files, run this from the repository root and visit the printed loopback address:
 
@@ -22,11 +30,11 @@ python3 -m http.server 8000 --bind 127.0.0.1 --directory site
 
 The 18-line examples have 16, 76 and 93 triangular faces. Each line is represented by exact integer coefficients `[a,b,c]` for `a*x+b*y+c=0`. Two independently implemented Python methods agree on the complete sets of faces. The browser uses integer arithmetic, with regression checks against both Python methods.
 
-The 93-face example reproduces Johannes Bader’s published construction from Pavlo Savchuk’s LineOrder drawing. It has three parallel pairs and no triple intersections. It is not a new result or a proof of optimality. The story reports a 6,000-change saved search that did not improve 93. Its private replay evidence is not included in this package.
+The 93-face example reproduces Johannes Bader’s published construction from Pavlo Savchuk’s LineOrder drawing. It has three parallel pairs and no triple intersections. It is not a new result or a proof of optimality. The experiment story reports four bounded search-run summaries totaling 6,000 changes, with no reported count above 93. The detailed per-change logs are not included in this repository, so this is a limited search result, not independently replayable evidence of a broader claim.
 
-The robot uses two states, two symbols, an initially blank infinite tape and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. Those 5,912 tables remain unresolved by this checker. The [known two-state theorem](https://mathworld.wolfram.com/BusyBeaver.html) says a halting robot in this model stops within six steps, so they never halt. This experiment does not prove that theorem. Six-state Busy Beaver research is separate.
+The robot uses two states, two symbols, an initially blank infinite tape, a left or right move on every step and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. Those 5,912 tables remain unresolved by this checker. For this standard model, [OEIS records S(2) = 6](https://oeis.org/A060843), and [MathWorld lists the same result](https://mathworld.wolfram.com/BusyBeaver.html), so the theorem separately implies that they never halt. This experiment does not prove that theorem. Six-state Busy Beaver research is separate.
 
-Construction exact checks are complete; no Lean geometric proof is included. There is no new mathematical record or official Autolab evaluation in this project.
+These examples let you inspect what computation establishes: a drawing can achieve a count, a robot can halt, and a repeated configuration can show why it never will. We have not proved a maximum for the fence problem. The standard two-state result settles the robot’s maximum separately from our 100-step checker.
 
 ## Run the checks
 

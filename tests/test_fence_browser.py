@@ -344,8 +344,8 @@ class FenceBrowserTests(unittest.TestCase):
         self.assertEqual('Hide shading', page.locator('#faceToggle').inner_text())
         self.assertIn('unresolved by our checker', page.locator('#busy-beaver .scope-note').inner_text())
         self.assertIn('unresolved by this checker', page.locator('.halt-note').inner_text())
-        self.assertIn('known six-step theorem settles it', page.locator('.halt-note').inner_text())
-        self.assertEqual('https://mathworld.wolfram.com/BusyBeaver.html', page.locator('#busy-beaver .scope-note a').get_attribute('href'))
+        self.assertIn('standard two-state result settles nonhalting only when applied separately', page.locator('.halt-note').inner_text())
+        self.assertEqual('https://oeis.org/A060843', page.locator('#busy-beaver .scope-note a').first.get_attribute('href'))
         self.assert_clean(); page.close()
 
     def test_compact_handles_keep_touch_targets_and_rotate_after_resize(self):

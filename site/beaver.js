@@ -28,7 +28,7 @@
       const r = f.repeat, offset = r.normalized_ones.length ? r.normalized_ones.join(', ') : 'none';
       return `Proved repeat: steps ${r.previous_step} and ${r.current_step} show the same state ${r.state} and the same complete set of 1s around the robot. ${r.shift === 0 ? 'The robot is back on the same square.' : `The robot has moved ${Math.abs(r.shift)} square${Math.abs(r.shift) === 1 ? '' : 's'} ${r.shift > 0 ? 'right' : 'left'}.`} Every other square is blank and identical rules apply after translation, so it will repeat ${r.period === 1 ? 'this step' : `these ${r.period} steps`} forever and never halt.`;
     }
-    if (f.status === 'UNKNOWN_AT_LIMIT') return `Unresolved by this checker at step 100. It saw no halt and no complete repeat. The known two-state theorem shows this robot never halts.`;
+    if (f.status === 'UNKNOWN_AT_LIMIT') return `Unresolved by this checker at step 100. It saw no halt and no complete repeat. The standard two-state result separately shows this robot never halts.`;
     return 'No result yet.';
   }
   function drawTape(f) {
@@ -86,7 +86,7 @@
     const strip = $('actionStrip'); strip.replaceChildren();
     if (f.status !== 'READY') {
       const done = document.createElement('span');
-      done.textContent = f.status === 'HALTED' ? 'The robot has stopped.' : f.status === 'UNKNOWN_AT_LIMIT' ? 'The checker stopped at 100 steps without a proof. The known two-state result tells us the robot never halts.' : 'The complete tape pattern has repeated. The robot will not halt.';
+      done.textContent = f.status === 'HALTED' ? 'The robot has stopped.' : f.status === 'UNKNOWN_AT_LIMIT' ? 'The checker stopped at 100 steps without a proof. The standard two-state result separately tells us the robot never halts.' : 'The complete tape pattern has repeated. The robot will not halt.';
       strip.append(done);
     } else {
       const [write, move, next] = table[f.state === 'A' ? 0 : 1][read];

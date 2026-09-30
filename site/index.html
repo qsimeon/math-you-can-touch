@@ -15,7 +15,7 @@
   </noscript>
 
   <header class="masthead">
-    <a class="wordmark" href="#opening" aria-label="Return to opening">OpenMath <span>field notes</span></a>
+    <a class="wordmark" href="#opening" aria-label="Return to opening">Math You Can Touch</a>
     <button id="presentationToggle" class="presentation-button" type="button" aria-pressed="false">Presentation mode <span aria-hidden="true">↗</span></button>
   </header>
 
@@ -54,7 +54,7 @@
           <h2 id="resultsTitle">What we found</h2>
         </div>
         <div id="resultLedger" class="ledger" aria-live="polite"></div>
-        <p class="scope-note">Each checked drawing shows a possible count. None proves a maximum, sets a new record, or has a Lean proof or official Autolab result.</p>
+        <p class="scope-note">A checked drawing shows that a count is possible. Finding the maximum would also require proving that no drawing can do better.</p>
       </section>
 
       <section id="kobon" class="scene kobon-scene" data-scene="Kobon geometry" aria-labelledby="kobonTitle">
@@ -140,13 +140,13 @@
         <div class="section-intro split-intro">
           <div>
             <p class="kicker">Experiment two · trying to beat 93</p>
-            <h2 id="searchTitle">Six thousand tries did not beat 93.</h2>
+            <h2 id="searchTitle">Four reported runs did not beat 93.</h2>
           </div>
-          <p>Four runs started from Bader’s 93-yard construction and tried 1,500 changes each. Most moved one fence. Every 250 tries, a run restarted from Bader’s construction with three random changes. No run found more than 93 yards. The search explored only drawings close to Bader’s construction.</p>
+          <p>This page reports four runs that started from Bader’s 93-yard construction and tried 1,500 changes each. Most moved one fence. Every 250 tries, a run restarted from Bader’s construction with three random changes. Their recorded summaries report no count above 93. The site includes those summaries, not the per-change logs, and the search explored only drawings close to Bader’s construction.</p>
         </div>
         <details class="search-method"><summary>How the search chose its moves</summary>
           <p>We used Python’s seeded random generator, with seeds 17 and 42 for each of two methods. One changed a fence’s position. The other could change its direction or position. Each change adjusted one whole-number coefficient in the line equation ax + by + c = 0. Its size was the larger of 1 and floor(max(|a|, |b|) / d), with d chosen from 10, 100, 1,000 and 10,000 and either sign chosen at random.</p>
-          <p>Ordinary moves were kept when the count stayed level or rose. Every 250 proposals, we restarted from Bader’s construction and applied three changes, accepting a valid restart even if its count fell. Invalid drawings were rejected. Both exact counters had to agree. Each run allowed 1,500 proposals or 120 seconds, whichever came first. All four used their proposal budget. These settings describe the 6,000-try experiment, not the earlier search that found 76.</p>
+          <p>The recorded method kept ordinary moves when the count stayed level or rose. Every 250 proposals, it restarted from Bader’s construction and applied three changes, accepting a valid restart even if its count fell. Invalid drawings were rejected. Both exact counters had to agree. Each run allowed 1,500 proposals or 120 seconds, whichever came first. All four summaries report that they used their proposal budget. These settings describe the reported 6,000-change experiment, not the earlier search that found 76.</p>
         </details>
         <div id="searchOutcome" class="search-outcome" aria-live="polite"></div>
         <div class="run-table-wrap">
@@ -187,7 +187,7 @@
           </section>
         </div>
         <div id="beaverSummary" class="beaver-summary" aria-live="polite"></div>
-        <p class="scope-note">The six-step robot shows a halt with four marked squares. Our bounded run tested all 20,736 two-state rule sets for at most 100 steps, and a third simulator agreed on those bounded outcomes. For 5,912 machines, it found neither a halt nor a repeat proof. These are unresolved by our checker. The <a href="https://mathworld.wolfram.com/BusyBeaver.html">known two-state maximum is six steps</a>, so all 5,912 never halt. That conclusion uses the established theorem, which our bounded run does not prove.</p>
+        <p class="scope-note">The six-step robot shows a halt with four marked squares. Our bounded run tested all 20,736 two-state rule sets for at most 100 steps, and a third simulator agreed on those bounded outcomes. For 5,912 machines, it found neither a halt nor a repeat proof. They are unresolved by our checker. In this standard blank-tape, two-state, two-symbol model with a left or right move on every step, the <a href="https://oeis.org/A060843">standard two-state, two-symbol result S(2) = 6</a> (also listed by <a href="https://mathworld.wolfram.com/BusyBeaver.html">MathWorld</a>). Therefore none of the 5,912 can halt. That conclusion uses the established result, which our bounded run does not prove.</p>
       </section>
 
       <section id="claims" class="scene claim-scene" data-scene="Claim boundaries" aria-labelledby="claimsTitle">
@@ -202,7 +202,7 @@
           </article>
           <article>
             <p class="lesson-number">02</p><h3>Proof</h3>
-            <p>Proving a maximum would mean showing that no drawing can do better. We have no such proof here, including in Lean.</p>
+            <p>Proving a maximum would mean showing that no drawing can do better. Checking individual drawings does not settle that question.</p>
           </article>
           <article>
             <p class="lesson-number">03</p><h3>Novelty</h3>
@@ -212,14 +212,14 @@
         <aside class="halt-note">
           <p class="kicker">Busy Beaver lesson</p>
           <h3>Three outcomes, three meanings</h3>
-          <p>A halting robot shows that its step count is possible. When it returns to an earlier state with the same 1s at the same distances from it, it will never halt. Reaching step 100 without either result leaves it unresolved by this checker. For these two-state robots, the known six-step theorem settles it.</p>
+          <p>A halting robot shows that its step count is possible. When it returns to an earlier state with the same 1s at the same distances from it, it will never halt. Reaching step 100 without either result leaves it unresolved by this checker. The standard two-state result settles nonhalting only when applied separately to this exact machine model.</p>
         </aside>
       </section>
 
       <section id="sources" class="scene sources-scene" data-scene="Sources and limits" aria-labelledby="sourcesTitle">
         <div class="section-intro split-intro">
           <div><p class="kicker">Sources</p><h2 id="sourcesTitle">Sources and limits</h2></div>
-          <p>Links open in a new tab. The page itself loads nothing from the internet.</p>
+          <p>Source links open in a new tab. The playgrounds use only the files included with this site and also work offline.</p>
         </div>
         <div class="source-columns">
           <div><h3>Sources</h3><ul id="sourceList" class="source-list"></ul></div>

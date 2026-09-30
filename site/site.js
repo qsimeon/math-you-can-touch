@@ -68,7 +68,7 @@
     const cards = [
       { label: 'Our original search', value: `${formatNumber(original.score)} yards`, body: `Our local search produced ${formatNumber(original.score)} triangular yards with 18 fences.` },
       { label: 'Bader’s published construction', value: `${formatNumber(recovered.score)} yards`, body: `Johannes Bader’s published construction has ${formatNumber(recovered.score)} triangular yards. We rebuilt it with exact integer coordinates from Pavlo Savchuk’s LineOrder drawing and recounted it.` },
-      { label: 'Trying to beat it', value: `${formatNumber(pilot.best)} yards`, body: `${formatNumber(pilot.runs.length)} fixed search runs reported ${formatNumber(pilot.runs.reduce((total, run) => total + run.proposals, 0))} bounded integer changes to Bader’s construction. None reported more than ${formatNumber(pilot.best)}. The private replay evidence is not included in this private source repository.` }
+      { label: 'Trying to beat it', value: `${formatNumber(pilot.best)} yards`, body: `${formatNumber(pilot.runs.length)} fixed search runs reported ${formatNumber(pilot.runs.reduce((total, run) => total + run.proposals, 0))} bounded integer changes to Bader’s construction. None reported more than ${formatNumber(pilot.best)}. The full search logs are not included with this site.` }
     ];
     cards.forEach((card) => {
       const article = document.createElement('article');
@@ -278,7 +278,7 @@
     const limits = Array.isArray(state.data.busybeaver.limitations) ? state.data.busybeaver.limitations : [];
     if (!limits.length) el.limitationList.append(createHtml('li', 'No limits were included.'));
     limits.forEach((limit) => el.limitationList.append(createHtml('li', text(limit).replace('UNKNOWN_AT_LIMIT', 'Unresolved by this checker'))));
-    const formal = state.data.formal || {}; el.formalStatus.textContent = `Formal status: ${text(formal.status)}. ${text(formal.explanation, 'No details were saved.')}`;
+    const formal = state.data.formal || {}; el.formalStatus.textContent = text(formal.explanation, '');
   }
 
   function scenes() { return [...document.querySelectorAll('[data-scene]')]; }
