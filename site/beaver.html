@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="color-scheme" content="light">
-  <meta name="description" content="An offline, editable two-state Busy Beaver tape robot on a real Three.js tabletop, with exact step-by-step explanations.">
+  <meta name="description" content="An offline, editable two-state Busy Beaver tape robot on a flat tape, with exact step-by-step explanations.">
   <title>Busy Beaver · teach a tape robot</title>
+  <link rel="stylesheet" href="playground.css">
   <link rel="stylesheet" href="beaver.css">
 </head>
 <body>
   <a class="skip" href="#workbench">Skip to the robot</a>
   <main>
-    <header class="masthead"><a href="index.html">Sundai / OpenMath</a><span>A little machine, a big question</span></header>
+    <nav class="page-nav" aria-label="Explore the project"><a href="index.html">Experiment story</a><a href="fences.html">Fence playground →</a></nav><noscript><p class="notice">JavaScript is needed to run the tape and edit rules. No simulation has run.</p></noscript>
     <div class="scope" role="note"><strong>Scope:</strong> Two states (A, B), two symbols (0, 1), initially blank infinite tape, one head at position 0. This playground stops after at most 100 steps. <strong>Six-state Busy Beaver research is separate; no BB(6) claim is made here.</strong></div>
     <section class="intro" aria-labelledby="pageTitle">
       <p class="eyebrow">An interactive tape robot</p>
@@ -19,9 +20,8 @@
       <p>The robot reads one square, writes a 0 or 1, moves one square left or right, then switches state. Could such a small instruction set keep going forever? Change the rules and watch exactly what each step does.</p>
     </section>
     <section id="workbench" class="workbench" aria-label="Tape robot workbench">
-      <div class="scene-heading"><div><p class="eyebrow">The tabletop</p><h2 id="presetTitle">The six-step finisher</h2></div><p id="stepReadout" class="step-readout" aria-live="polite">Step 0 of 100 · state A · head at 0</p></div>
-      <div class="scene"><div id="stage" class="stage" role="img" tabindex="0" aria-label="Three-dimensional tape robot on a tabletop; use arrow keys to orbit or +/− to zoom; the accessible tape immediately below shows exact cell positions"><div id="flatStage" class="flat-stage" role="region" aria-label="Scrollable flat tape window" tabindex="0" hidden><p><strong>Flat tape view.</strong> The 3D renderer is unavailable; these cells and the rules still run from the same exact state.</p><div id="flatTape" class="flat-tape"></div></div><div id="robotBadge" class="robot-badge" aria-hidden="true">STATE A · NEXT 0</div></div><p id="viewNote" class="view-note">Each raised tile is a tape square; the red robot sits over the square it will read next. A raised gold mark means 1. Drag to orbit or use arrow keys; scroll or press +/− to zoom. The 3D table shows the same nine head-relative squares listed below.</p></div>
-      <div class="semantic-tape"><p class="eyebrow">Exact tape window · head ±4</p><div id="tape" class="tape" role="group" aria-label="Nine tape squares around the head"></div><p id="tapeSummary" class="tape-summary">0 marked squares on the entire tape.</p></div>
+      <div class="scene-heading"><div><p class="eyebrow">The tape</p><h2 id="presetTitle">The six-step finisher</h2></div><p id="stepReadout" class="step-readout" aria-live="polite">Step 0 of 100 · state A · head at 0</p></div>
+      <div class="semantic-tape"><div class="tape-heading"><p class="eyebrow">Read → write → move → change state</p><p id="robotBadge" class="robot-badge">STATE A · NEXT 0</p></div><div id="tape" class="tape" role="group" aria-label="Nine tape squares around the head"></div><p id="viewNote" class="view-note">The outlined square is under the head. This window follows it, showing nine squares of an infinite tape. Numbers below each square are absolute positions.</p><p id="tapeSummary" class="tape-summary">0 marked squares on the entire tape.</p></div>
       <div class="control-row" role="group" aria-label="Run controls"><button id="step" type="button">Step once</button><button id="back" type="button" disabled>Back one step</button><button id="run" type="button">Run</button><button id="reset" type="button">Reset tape</button></div>
       <div class="readout" aria-live="polite" aria-atomic="true"><p class="eyebrow">What just happened?</p><p id="narration">At position 0, state A is ready to read a blank square (0). Choose your prediction, then step.</p><p id="outcome" class="outcome">Ready. No conclusion yet.</p><div id="cycleCompare" class="cycle-compare" hidden><p><strong>Compare the whole situation, relative to the head</strong></p><div class="compare-row"><span id="previousLabel"></span><div id="previousTape" class="compare-tape"></div></div><div class="compare-row"><span id="currentLabel"></span><div id="currentTape" class="compare-tape"></div></div><p id="compareDetail"></p></div></div>
     </section>
@@ -32,10 +32,9 @@
       <div class="editor"><p class="eyebrow">Teach the robot</p><h2>Four little rules</h2><p>Choose the action for each state and symbol it reads. <strong>Any edit resets the tape, step count, and prediction.</strong> H means halt after writing and moving; it is not a third working state.</p><div class="rule-table-wrap"><table id="rules"><caption>For each state and read symbol, set write, move, and next state</caption><thead><tr><th scope="col">If it reads</th><th scope="col">Write</th><th scope="col">Move</th><th scope="col">Next</th></tr></thead><tbody id="ruleRows"></tbody></table></div></div>
     </section>
     <section class="explanation" aria-labelledby="meaningTitle"><p class="eyebrow">What did we actually learn?</p><h2 id="meaningTitle">A repeated whole situation is evidence.</h2><p>A <strong>halt</strong> is witnessed when a rule sends the robot to H. A <strong>translation cycle</strong> needs the same working state and the same <em>entire finite set</em> of 1s at the same offsets from the head as at an earlier step. The absolute head position can differ. Because the untouched tape is 0 everywhere else and the rules work the same at every position, every later action repeats with that shift. It cannot reach H in a later cycle if it did not reach H in the first one.</p><p>After 100 steps without either witness, the answer is <strong>unknown at the limit</strong>. A growing trail may look endless, but a cutoff does not prove it. This is a bounded teaching simulation, not a solver for arbitrary machines or a proof about BB(6).</p></section>
-    <footer><a href="index.html#busy-beaver">See the saved run on the main learning page</a> · <a href="3d.html">Explore the separate Kobon tabletop</a></footer>
+    <footer><a href="index.html#busy-beaver">See the saved run on the main learning page</a> · <a href="fences.html">Explore the fence playground</a></footer>
   </main>
   <script src="beaver-core.js"></script>
-  <script src="vendor/three.min.js"></script>
   <script src="beaver.js"></script>
 </body>
 </html>

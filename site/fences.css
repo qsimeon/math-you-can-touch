@@ -1,0 +1,45 @@
+.viewer-shell { border: 1px solid var(--line); }
+.board-heading { display: flex; gap: 1rem; justify-content: space-between; align-items: center; padding: 1rem 1.25rem; }
+.board-heading h2 { font-size: 1.35rem; }
+.live-score { margin: 0; font-size: .86rem; color: var(--red); font-weight: 700; }
+.workbench-grid { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; border-top: 1px solid var(--line); }
+.board-area { min-width: 0; background: var(--board); }
+#fenceSvg { display: block; width: 100%; aspect-ratio: 3 / 2; touch-action: none; }
+.board-paper { fill: var(--board); }
+.yard { fill: #d9a966; fill-opacity: .62; stroke: transparent; cursor: pointer; }
+.yard:hover, .yard.is-selected { fill: #e39735; fill-opacity: .94; stroke: var(--red); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.fence { stroke: #315e4c; stroke-width: 1.6; vector-effect: non-scaling-stroke; cursor: pointer; }
+.fence.is-support { stroke: #af6c18; stroke-width: 3; }
+.fence.is-selected { stroke: var(--red); stroke-width: 3; }
+.fence-handle { fill: var(--paper); stroke: var(--red); stroke-width: 3; cursor: grab; }
+.fence-handle:active { cursor: grabbing; }
+.view-actions { display: flex; flex-wrap: wrap; gap: .4rem; padding: .7rem 1rem 0; }
+.board-area > .hint { margin: .5rem 1rem 1rem; }
+.fence-picker { border-left: 1px solid var(--line); padding: 1rem; min-width: 0; }
+#fenceList { padding: 0; margin: .7rem 0; list-style: none; max-height: 15rem; overflow: auto; }
+#fenceList li { margin-bottom: .35rem; }
+#fenceList button { width: 100%; text-align: left; overflow-wrap: anywhere; font-size: .82rem; border-color: var(--line); }
+.edit-actions { display: grid; grid-template-columns: 1fr 1fr; gap: .4rem; }
+.edit-actions button { padding-inline: .3rem; font-size: .86rem; }
+.board-footer { padding: .8rem 1.25rem; border-top: 1px solid var(--line); display: flex; gap: 1rem; align-items: center; justify-content: space-between; }
+.board-footer p { margin: 0; max-width: 48rem; font-size: .9rem; }
+.board-footer button { flex-shrink: 0; }
+.inspector, .lesson { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem 4rem; padding: 2rem 0; border-top: 1px solid var(--line); }
+.inspector { border: none; }
+.inspector p, .lesson p { max-width: 36rem; }
+#supportLines { padding-left: 1.4rem; overflow-wrap: anywhere; }
+#supportLines li { padding: .35rem 0; font-size: .88rem; }
+.snapshot-picker { display: flex; flex-wrap: wrap; gap: .4rem; }
+.motion-controls label { display: flex; justify-content: space-between; }
+#motionSlider { display: block; width: 100%; min-height: 44px; accent-color: var(--red); }
+.motion-controls strong { font-size: 1.3rem; color: var(--red); }
+@media(max-width: 760px) {
+  .workbench-grid { grid-template-columns: 1fr; }
+  .board-heading, .board-footer { align-items: start; flex-direction: column; }
+  .fence-picker { border-left: none; border-top: 1px solid var(--line); }
+  #fenceList { display: grid; grid-template-columns: 1fr 1fr; gap: .35rem; max-height: 11rem; }
+  #fenceList li { margin: 0; }
+  #fenceList button { height: 100%; }
+  .inspector, .lesson { grid-template-columns: 1fr; gap: 1.5rem; }
+  .edit-actions { grid-template-columns: repeat(2, 1fr); }
+}

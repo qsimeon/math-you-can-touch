@@ -13,7 +13,7 @@ class FenceBrowserTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.playwright = sync_playwright().start()
-        cls.browser = cls.playwright.chromium.launch(headless=True, args=['--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
+        cls.browser = cls.playwright.chromium.launch(headless=True)
 
     @classmethod
     def tearDownClass(cls):
@@ -24,9 +24,8 @@ class FenceBrowserTests(unittest.TestCase):
         page = self.browser.new_page(viewport={'width': 1440, 'height': 1100}, reduced_motion='reduce')
         self.errors = []
         page.on('pageerror', lambda error: self.errors.append(str(error)))
-        page.goto((ROOT / 'site/3d.html').as_uri())
+        page.goto((ROOT / 'site/fences.html').as_uri())
         page.locator('#fenceSvg').wait_for()
-        page.locator('canvas').wait_for()
         return page
 
     def assert_clean(self):
@@ -81,34 +80,76 @@ class FenceBrowserTests(unittest.TestCase):
         self.assert_clean()
         page.close()
 
-    def test_webgl_keyboard_camera_and_face_click(self):
+    def test_planar_selection_zoom_pan_and_keyboard_do_not_change_geometry(self):
         page = self.page()
-        page.locator('#editPublished').click()
-        canvas = page.locator('canvas')
-        before = page.screenshot()
-        page.locator('#webglStage').focus()
+        before = page.locator('#fenceList button').all_inner_texts()
+        center = page.locator('#fenceFaces polygon').first.evaluate('(e) => { const p = [...e.points]; return new DOMPoint(p.reduce((s,p)=>s+p.x,0)/3,p.reduce((s,p)=>s+p.y,0)/3).matrixTransform(e.getScreenCTM()).toJSON(); }')
+        page.mouse.click(center['x'], center['y'])
+        self.assertEqual(page.locator('#supportLines li').count(), 3)
+        self.assertEqual(page.locator('.yard.is-selected').count(), 1)
+        self.assertEqual(page.locator('.fence.is-support').count(), 3)
+        page.locator('#focusFace').click()
+        page.locator('#zoomIn').click()
+        page.locator('#zoomOut').click()
+        page.locator('#panMode').click()
+        box = page.locator('#fenceSvg').bounding_box()
+        page.mouse.move(box['x'] + 20, box['y'] + 20)
+        page.mouse.down()
+        page.mouse.move(box['x'] + 80, box['y'] + 50)
+        page.mouse.up()
+        page.locator('#fitView').click()
+        self.assertEqual(before, page.locator('#fenceList button').all_inner_texts())
+        page.locator('#editMode').click()
+        page.locator('#fenceSvg').focus()
         page.keyboard.press('ArrowRight')
-        page.keyboard.press('+')
-        page.keyboard.press('t')
-        page.locator('#orbitLeft').click()
-        after = page.screenshot()
-        self.assertNotEqual(before, after)
-        canvas.scroll_into_view_if_needed()
-        box = canvas.bounding_box()
-        selected = False
-        for vertical in (.35, .42, .49, .56, .63):
-            for horizontal in (.35, .42, .49, .56, .63):
-                page.mouse.click(box['x'] + box['width'] * horizontal, box['y'] + box['height'] * vertical)
-                if page.locator('#supportLines li').count() == 3:
-                    selected = True
-                    break
-            if selected:
-                break
-        self.assertTrue(selected, 'a click on the rendered tabletop must raycast-select a raised face tile')
-        self.assertIn('Face ', page.locator('#faceTitle').inner_text())
+        self.assertEqual(page.locator('#fenceList button').nth(1).get_attribute('aria-pressed'), 'true')
+        page.keyboard.press(']')
+        self.assertNotEqual(before, page.locator('#fenceList button').all_inner_texts())
+        page.keyboard.press('z')
+        self.assertEqual(before, page.locator('#fenceList button').all_inner_texts())
+        self.assertEqual(page.locator('canvas').count(), 0)
         self.assert_clean()
         page.close()
 
+    def test_published_fit_frames_all_counted_faces(self):
+        page = self.page()
+        page.locator('#editPublished').click()
+        bounds = page.locator('#fenceFaces').evaluate('(g) => { const r=g.getBBox(); return {x:r.x,y:r.y,width:r.width,height:r.height}; }')
+        self.assertGreater(bounds['width'], 250)
+        self.assertGreater(bounds['height'], 250)
+        self.assertGreaterEqual(bounds['x'], 0)
+        self.assertGreaterEqual(bounds['y'], 0)
+        self.assertLessEqual(bounds['x'] + bounds['width'], 720)
+        self.assertLessEqual(bounds['y'] + bounds['height'], 480)
+        for width in (320, 390, 768):
+            page.set_viewport_size({'width':width, 'height':850})
+            page.wait_for_function('document.documentElement.scrollWidth <= innerWidth')
+        self.assert_clean()
+        page.close()
+
+    def test_slide_buttons_exact_download_and_return_to_warmup(self):
+        from tempfile import TemporaryDirectory
+        from kobon.io import load_solution
+        from kobon.geometry import triangles_by_adjacency
+        page = self.page()
+        page.locator('#editPublished').click()
+        self.assertEqual(page.locator('#fenceFaces polygon').count(), 93)
+        before = page.locator('#fenceList button').all_inner_texts()
+        page.locator('#slideRight').click()
+        self.assertNotEqual(before, page.locator('#fenceList button').all_inner_texts())
+        with TemporaryDirectory() as directory:
+            with page.expect_download() as event:
+                page.locator('#downloadFence').click()
+            target = Path(directory) / 'lines.json'
+            event.value.save_as(target)
+            self.assertEqual(len(triangles_by_adjacency(load_solution(target))), page.locator('#fenceFaces polygon').count())
+        page.locator('#undoFence').click()
+        self.assertEqual(before, page.locator('#fenceList button').all_inner_texts())
+        page.locator('#warmup').click()
+        self.assertEqual(page.locator('#fenceList button').count(), 4)
+        self.assertEqual(page.locator('#fenceFaces polygon').count(), 2)
+        self.assert_clean()
+        page.close()
 
     def test_first_nudge_enables_undo_and_restore_saved_identities(self):
         page = self.page()
@@ -157,16 +198,16 @@ class FenceBrowserTests(unittest.TestCase):
         page.locator('#fenceList button').nth(3).click()
         handle = page.locator('.fence-handle')
         box = handle.bounding_box()
-        page.mouse.move(box['x'] + 4, box['y'] + 4)
+        page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
         page.mouse.down()
-        page.mouse.move(box['x'] + 4, box['y'] - 150)
-        page.locator('#fenceSvg').dispatch_event('pointercancel', {'pointerId': 1, 'clientX': box['x'] + 4, 'clientY': box['y'] - 150})
+        page.mouse.move(box['x'] + box['width'] / 2, box['y'] - 150)
+        page.locator('#fenceSvg').dispatch_event('pointercancel', {'pointerId': 1, 'clientX': box['x'] + box['width'] / 2, 'clientY': box['y'] - 150})
         page.mouse.up()
         self.assertEqual(page.locator('#fenceList button').all_inner_texts(), before)
         self.assertTrue(page.locator('#undoFence').is_disabled())
         page.locator('#fenceList button').nth(0).click()
         box = page.locator('.fence-handle').bounding_box()
-        page.mouse.move(box['x'] + 4, box['y'] + 4)
+        page.mouse.move(box['x'] + box['width'] / 2, box['y'] + box['height'] / 2)
         page.mouse.down()
         page.mouse.move(box['x'] + 80, box['y'] + 30)
         page.mouse.up()

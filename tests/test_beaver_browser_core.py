@@ -3,6 +3,7 @@
 No research worker, downloads, external network, output artifacts or screenshots.
 """
 import json
+from collections import Counter
 import subprocess
 import unittest
 from pathlib import Path
@@ -30,13 +31,13 @@ class BeaverCoreTests(unittest.TestCase):
         self.assertEqual(20736, len(tables))
         browser_results = bun_core(tables)
         self.assertEqual(len(tables), len(browser_results))
-        statuses = set()
+        statuses = Counter()
         for index, (table, browser) in enumerate(zip(tables, browser_results)):
             expected = simulate_set(table, step_limit=100)
             self.assertEqual(expected, simulate_dict(table, step_limit=100), f'Python disagreement at {index}')
             self.assertEqual(expected, browser, f'JS disagreement at {index}: {table}')
-            statuses.add(browser['status'])
-        self.assertEqual({'HALTED', 'NONHALTING_BY_TRANSLATION_CYCLE', 'UNKNOWN_AT_LIMIT'}, statuses)
+            statuses[browser['status']] += 1
+        self.assertEqual({'HALTED': 9784, 'NONHALTING_BY_TRANSLATION_CYCLE': 5040, 'UNKNOWN_AT_LIMIT': 5912}, statuses)
 
     def test_step_level_state_and_repeat_witness(self):
         script = """const C=require(process.argv[1]);
@@ -55,11 +56,10 @@ console.log('step contract passed');"""
 
 
 class BeaverPageTests(unittest.TestCase):
-    def test_controls_presets_fallback_and_local_assets(self):
+    def test_controls_presets_flat_tape_and_local_assets(self):
         from playwright.sync_api import sync_playwright
         with sync_playwright() as playwright:
-            browser = playwright.chromium.launch(headless=True, args=[
-                '--enable-webgl', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'])
+            browser = playwright.chromium.launch(headless=True)
             page = browser.new_page(viewport={'width': 390, 'height': 850}, reduced_motion='reduce')
             page.clock.install()
             errors, requests = [], []
@@ -67,32 +67,19 @@ class BeaverPageTests(unittest.TestCase):
             page.on('request', lambda request: requests.append(request.url))
             page.goto(PAGE)
             self.assertEqual(4, page.locator('#ruleRows tr').count())
-            self.assertEqual(1, page.locator('#stage canvas').count())
-            self.assertFalse(page.locator('#flatStage').is_visible())
-            page.locator('#stage').focus()
-            page.keyboard.press('ArrowRight')
-            page.keyboard.press('+')
-            self.assertEqual('stage', page.evaluate('document.activeElement.id'))
+            self.assertEqual(0, page.locator('canvas').count())
             self.assertEqual(12, page.locator('#ruleRows select').count())
             self.assertEqual(9, page.locator('#tape .tape-cell').count())
             self.assertIn('BB(6)', page.locator('.scope').inner_text())
             self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'), 390)
             self.assertEqual('static', page.locator('.scope').evaluate('(e) => getComputedStyle(e).position'))
             self.assertEqual('static', page.locator('#viewNote').evaluate('(e) => getComputedStyle(e).position'))
-            self.assertGreaterEqual(page.locator('#viewNote').bounding_box()['y'],
-                                    page.locator('#stage').bounding_box()['y'] + page.locator('#stage').bounding_box()['height'])
-            bounds = json.loads(page.locator('#stage').get_attribute('data-frame-bounds'))
-            self.assertTrue(all(-.85 < n < .85 for n in bounds.values()), bounds)
-            self.assertIn('nine head-relative squares', page.locator('#viewNote').inner_text())
+            self.assertIn('nine squares of an infinite tape', page.locator('#viewNote').inner_text())
             for width in (320, 390, 640, 740):
                 page.set_viewport_size({'width': width, 'height': 850})
-                page.wait_for_function("""() => {
-                    const stage = document.querySelector('#stage');
-                    return stage.dataset.frameBounds && stage.clientWidth <= innerWidth;
-                }""")
-                fitted = json.loads(page.locator('#stage').get_attribute('data-frame-bounds'))
-                self.assertTrue(all(-.85 < n < .85 for n in fitted.values()), (width, fitted))
-                self.assertEqual('static', page.locator('.scope').evaluate('(e) => getComputedStyle(e).position'))
+                page.wait_for_function('document.documentElement.scrollWidth <= innerWidth')
+                self.assertLessEqual(page.evaluate('document.documentElement.scrollWidth'), width)
+                self.assertEqual(page.locator('#tape .tape-cell').count(), 9)
             page.set_viewport_size({'width': 390, 'height': 850})
             page.locator('[data-predict="HALTED"]').click()
             page.locator('#step').click()
@@ -143,19 +130,4 @@ class BeaverPageTests(unittest.TestCase):
             self.assertFalse(errors, errors)
             self.assertTrue(all(url.startswith('file://') or url.startswith('data:') for url in requests), requests)
             page.close()
-            flat = browser.new_page(viewport={'width': 390, 'height': 850})
-            flat.add_init_script('window.WebGLRenderingContext = undefined')
-            flat.goto(PAGE)
-            self.assertTrue(flat.locator('#flatStage').is_visible())
-            self.assertEqual(0, flat.locator('#stage canvas').count())
-            flat.locator('#preset').select_option('cycle')
-            flat.locator('#step').click()
-            self.assertIn('Proved repeat', flat.locator('#outcome').inner_text())
-            self.assertEqual('0 · 1', flat.locator('#flatTape .head').inner_text())
-            self.assertLessEqual(flat.evaluate('document.documentElement.scrollWidth'), 390)
-            scroller = flat.locator('#flatStage')
-            self.assertGreater(scroller.evaluate('(e) => e.scrollWidth'), scroller.evaluate('(e) => e.clientWidth'))
-            scroller.evaluate('(e) => { e.scrollLeft = e.scrollWidth; }')
-            self.assertGreater(scroller.evaluate('(e) => e.scrollLeft'), 0)
-            flat.close()
             browser.close()
