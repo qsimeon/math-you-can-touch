@@ -26,7 +26,7 @@ jobs:
       - name: Check out source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Check exact arithmetic and saved examples
-        run: python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit tests.test_wall_crossing tests.test_beaver_certificates tests.test_public_site -v
+        run: python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit tests.test_wall_crossing tests.test_beaver_certificates tests.test_kobon_sat tests.test_public_site -v
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
         with:

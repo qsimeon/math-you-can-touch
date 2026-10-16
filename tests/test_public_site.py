@@ -64,7 +64,7 @@ class PublicSiteTests(unittest.TestCase):
                        "only 16 undivided yards", "docs/RESEARCH.md"):
             self.assertIn(phrase, index)
         for phrase in ("288 - 2p", "U = E - 3T", "triple intersections",
-                       "does not include a SAT model", "5,912", "20,736 fully labeled"):
+                       "checked computation that no mathematician has yet reviewed", "5,912", "20,736 fully labeled"):
             self.assertIn(phrase.lower(), research.lower())
         self.assertIn("tests.test_segment_audit", readme)
 
