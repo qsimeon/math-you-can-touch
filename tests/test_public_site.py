@@ -51,7 +51,22 @@ class PublicSiteTests(unittest.TestCase):
         self.assertIn("https://oeis.org/A060843", index)
         self.assertIn("per-change logs", index)
         self.assertIn("Pavlo Savchuk", fences)
+        self.assertIn("kobon_18_93tri_lines.svg", fences)
         self.assertIn("https://creativecommons.org/licenses/by/4.0/", fences)
+        data = (ROOT / "site/data.js").read_text()
+        self.assertIn("line-order/blob/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/README.md", data)
+
+    def test_research_lesson_has_exact_gap_and_scope(self):
+        index = (ROOT / "site/index.html").read_text()
+        research = (ROOT / "docs/RESEARCH.md").read_text()
+        readme = (ROOT / "README.md").read_text()
+        for phrase in ("58 bounded fence segments", "only three", "136 triangle outlines",
+                       "only 16 undivided yards", "docs/RESEARCH.md"):
+            self.assertIn(phrase, index)
+        for phrase in ("288 - 2p", "U = E - 3T", "triple intersections",
+                       "does not include a SAT model", "5,912", "20,736 fully labeled"):
+            self.assertIn(phrase.lower(), research.lower())
+        self.assertIn("tests.test_segment_audit", readme)
 
     def test_deployment_publishes_only_site(self):
         workflow = (ROOT / ".github/workflows/pages.yml").read_text()

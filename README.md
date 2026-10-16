@@ -20,13 +20,13 @@ For browsers that restrict local files, run this from the repository root and vi
 python3 -m http.server 8000 --bind 127.0.0.1 --directory site
 ```
 
-### A five-minute visit
+### Quick tour
 
 1. Open the fence playground. Drag a fence to slide it, or drag its red turn handle to rotate it around the center dot. You can also use the Slide and Turn buttons. The count updates after a valid move. Undo brings the previous drawing back.
 2. Choose Explore 93 yards to edit a copy of Bader’s published construction, reconstructed from Pavlo Savchuk’s LineOrder drawing. Click a shaded yard or use Previous yard and Next yard to see its three fences. The separate slider loads 41 saved positions. Pan, zoom and Zoom to yard change only the view.
 3. Open the robot. Predict its outcome, step through the six-step example, then change a rule. A halt, a complete configuration repeated up to translation, and an unresolved 100-step cutoff have separate outcomes.
 
-## What the examples establish
+## Verified examples
 
 The 18-line examples have 16, 76 and 93 triangular faces. Each line is represented by exact integer coefficients `[a,b,c]` for `a*x+b*y+c=0`. Two independently implemented Python methods agree on the complete sets of faces. The browser uses integer arithmetic, with regression checks against both Python methods.
 
@@ -36,16 +36,23 @@ The robot uses two states, two symbols, an initially blank infinite tape, a left
 
 These examples let you inspect what computation establishes: a drawing can achieve a count, a robot can halt, and a repeated configuration can show why it never will. We have not proved a maximum for the fence problem. The standard two-state result settles the robot’s maximum separately from our 100-step checker.
 
+## The gap and next experiment
+
+Our original search used three random seeds, with a fresh small-coefficient drawing at the start and every 200 proposals, for 1,200 proposals per seed. Its best drawing had 76 triangular regions. Bader’s earlier drawing has a coordinated threefold pattern and reaches 93. An exact audit finds 58 bounded line segments unused by triangles in our 76 drawing and only three in the reconstructed 93. These numbers measure the difference between saved drawings. The [research notes](docs/RESEARCH.md) explain Savchuk’s later crossing-order search, the 94-face question and a proposed search where every pair of lines crosses. The experiment has not yet found a new record or proved the maximum.
+
+Multiple distinct lines may meet at one point. A 17-line fan through one point with an eighteenth line crossing its rays traces 136 triangle outlines but forms just 16 undivided triangular regions. The crossing point is legal. The larger outlines do not count because other lines divide them.
+
 ## Run the checks
 
 The arithmetic checks use Python 3.10+ and its standard library. Run from the repository root:
 
 ```sh
 python3 -c "from kobon.verify import verify_file; r=verify_file('candidates/prior-art-93/solution.json'); print(r['score'], r['verification'])"
-python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver -v
+python3 tools/segment_audit.py candidates/prior-art-93/solution.json
+python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit -v
 ```
 
-The first command should print `93 two local exact-arithmetic algorithms agree`. The second includes a bounded enumeration test. `tests.test_prior_art` reconstructs the witness from the included drawing and verifies its source identity.
+The first command should print `93 two local exact-arithmetic algorithms agree`. The segment audit should report three unused bounded segments. The test command includes a bounded enumeration test. `tests.test_prior_art` reconstructs the witness from the included drawing and verifies its source identity.
 
 Optional cross-language and browser checks require an already-installed Bun executable, the Python Playwright package and its Chromium browser. They are test dependencies only. These commands do not install anything:
 
@@ -63,7 +70,8 @@ The optional tests compare all saved fence frames with both Python checkers and 
 | `kobon/` | Input validation and the two exact geometry checkers. |
 | `busybeaver/` | Two simulators and bounded enumeration helpers. |
 | `candidates/` | The three exact line arrangements and retained provenance. |
-| `tools/` | Deterministic reconstruction of the published drawing. |
+| `tools/` | Deterministic reconstruction of the published drawing and exact segment audit. |
+| `docs/` | Research explanation, candidate algorithm and the concurrency example. |
 | `tests/` | Arithmetic, cross-language and browser regression checks. |
 | `evidence/prior-art-93/` | The original drawing, upstream attribution record and exact certificates. |
 
@@ -71,6 +79,6 @@ The upstream README is an unmodified attribution and license record. Its example
 
 ## Attribution and reuse
 
-Johannes Bader is credited for the 93-triangle construction. Pavlo Savchuk supplied the drawing through [LineOrder](https://arxiv.org/html/2507.07951v1). The pinned upstream README declares CC BY 4.0, copyright Pavlo Savchuk 2024–2025. [The construction README](candidates/prior-art-93/README.md) records the exact source, deterministic rounding changes and license declaration.
+Johannes Bader is credited for the 93-triangle construction. Pavlo Savchuk supplied the drawing through [LineOrder](https://github.com/zegalur/line-order/blob/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/README.md). Its pinned README declares [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/), copyright Pavlo Savchuk 2024–2025. His [2025 paper](https://arxiv.org/html/2507.07951v1) describes the later crossing-order method. It does not document how Bader found the 93-face construction. [The construction README](candidates/prior-art-93/README.md) records the exact source, deterministic rounding changes and license declaration.
 
 The upstream license applies to its respective material. No license for the newly written project code is granted here.
