@@ -32,7 +32,7 @@ The 18-line examples have 16, 76 and 93 triangular faces. Each line is represent
 
 The 93-face example reproduces Johannes Bader’s published construction from Pavlo Savchuk’s LineOrder drawing. It has three parallel pairs and no triple intersections. It is not a new result or a proof of optimality. The experiment story reports four bounded search-run summaries totaling 6,000 changes, with no reported count above 93. The detailed per-change logs are not included in this repository, so this is a limited search result, not independently replayable evidence of a broader claim.
 
-The robot uses two states, two symbols, an initially blank infinite tape, a left or right move on every step and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. Those 5,912 tables remain unresolved by this checker. For this standard model, [OEIS records S(2) = 6](https://oeis.org/A060843), and [MathWorld lists the same result](https://mathworld.wolfram.com/BusyBeaver.html), so the theorem separately implies that they never halt. This experiment does not prove that theorem. Six-state Busy Beaver research is separate.
+The robot uses two states, two symbols, an initially blank infinite tape, a left or right move on every step and a 100-step limit. All 20,736 fully labeled transition tables were checked. The saved experiment reports 9,784 halts, 5,040 translation-cycle witnesses and 5,912 unresolved tables. The longest observed halting run takes six steps and leaves four ones. The cross-language test recomputes these totals and compares all 20,736 tables across the three simulators. The 100-step simulator leaves those 5,912 tables unresolved. A separate certificate checker, `tools/beaver_certificates.py`, proves that each of them never halts and certifies no halting table, so the repository's own checks confirm six steps as the longest halting run. That reproduces the known value [S(2) = 6](https://oeis.org/A060843), also listed by [MathWorld](https://mathworld.wolfram.com/BusyBeaver.html). The [research notes](docs/RESEARCH.md#why-the-remaining-robots-never-halt) explain both certificates. Six-state Busy Beaver research is separate.
 
 These examples let you inspect what computation establishes: a drawing can achieve a count, a robot can halt, and a repeated configuration can show why it never will. We have not proved a maximum for the fence problem. The standard two-state result settles the robot’s maximum separately from our 100-step checker.
 
@@ -49,7 +49,7 @@ The arithmetic checks use Python 3.10+ and its standard library. Run from the re
 ```sh
 python3 -c "from kobon.verify import verify_file; r=verify_file('candidates/prior-art-93/solution.json'); print(r['score'], r['verification'])"
 python3 tools/segment_audit.py candidates/prior-art-93/solution.json
-python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit -v
+python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit tests.test_wall_crossing tests.test_beaver_certificates -v
 ```
 
 The first command should print `93 two local exact-arithmetic algorithms agree`. The segment audit should report three unused bounded segments. The test command includes a bounded enumeration test. `tests.test_prior_art` reconstructs the witness from the included drawing and verifies its source identity.
@@ -70,7 +70,7 @@ The optional tests compare all saved fence frames with both Python checkers and 
 | `kobon/` | Input validation and the two exact geometry checkers. |
 | `busybeaver/` | Two simulators and bounded enumeration helpers. |
 | `candidates/` | The three exact line arrangements and retained provenance. |
-| `tools/` | Deterministic reconstruction of the published drawing and exact segment audit. |
+| `tools/` | Reconstruction of the published drawing, the exact segment audit, the wall-crossing search and the robot certificates. |
 | `docs/` | Research explanation, candidate algorithm and the concurrency example. |
 | `tests/` | Arithmetic, cross-language and browser regression checks. |
 | `evidence/prior-art-93/` | The original drawing, upstream attribution record and exact certificates. |
