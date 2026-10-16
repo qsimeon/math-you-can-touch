@@ -22,23 +22,23 @@
   <main id="main-content">
     <section id="opening" class="scene opening" data-scene="Opening" aria-labelledby="pageTitle">
       <div class="opening-copy">
-        <p class="kicker">Fences and a tape robot</p>
+        <p class="kicker">Two hands-on math puzzles</p>
         <h1 id="pageTitle">Math you can touch.</h1>
-        <p class="deck">Move fences to make triangular yards, or program a tiny robot and guess whether it stops. Start with a playground. The lesson and saved experiments are below.</p>
-        <div class="opening-links">
-          <a class="text-link" href="#kobon">Read the fence lesson <span aria-hidden="true">↓</span></a>
-          <a id="fencePlaygroundLink" class="garden-link" href="fences.html">Play with the fences <span aria-hidden="true">↗</span></a>
-          <a class="garden-link" href="beaver.html">Program the tape robot <span aria-hidden="true">↗</span></a>
-        </div>
+        <p class="deck">Change one thing. Watch what happens. No setup or math background needed.</p>
       </div>
-      <figure class="opening-mark" aria-label="Three infinite fences, x equals 140, y equals 320, and y equals x minus 20, enclosing a triangular yard with vertices 140,120; 140,320; and 340,320.">
-        <svg viewBox="0 0 460 400" role="img" aria-hidden="true">
-          <path d="M140 26V374M30 320H430M30 10L400 380" />
-          <polygon class="mark-face" points="140,120 140,320 340,320" />
-          <circle cx="140" cy="120" r="6" /><circle cx="140" cy="320" r="6" /><circle cx="340" cy="320" r="6" />
-        </svg>
-        <figcaption>Three fences meet to make one yard.</figcaption>
-      </figure>
+      <div class="playground-previews" aria-label="Choose a playground">
+        <a id="fencePlaygroundLink" class="playground-preview" href="fences.html">
+          <img src="previews/fences.png" width="1012" height="828" alt="A fence board with shaded triangular yards and a red handle for turning a fence.">
+          <span class="preview-title">Move a fence <span aria-hidden="true">↗</span></span>
+          <span>Drag a line. Watch triangles appear and disappear.</span>
+        </a>
+        <a class="playground-preview" href="beaver.html">
+          <img src="previews/robot.png" width="1012" height="843" alt="A tape robot reading squares, with controls to take one step or run.">
+          <span class="preview-title">Program a tiny robot <span aria-hidden="true">↗</span></span>
+          <span>Give it four rules. Will it ever stop?</span>
+        </a>
+      </div>
+      <a class="text-link lesson-link" href="#kobon">See how the puzzles work <span aria-hidden="true">↓</span></a>
     </section>
 
     <section id="dataState" class="data-state" aria-live="polite">
@@ -48,15 +48,6 @@
     </section>
 
     <div id="exhibition" hidden>
-      <section id="results" class="scene result-ledger" data-scene="Current results" aria-labelledby="resultsTitle">
-        <div class="section-intro">
-          <p class="kicker">Results</p>
-          <h2 id="resultsTitle">What we found</h2>
-        </div>
-        <div id="resultLedger" class="ledger" aria-live="polite"></div>
-        <p class="scope-note">A checked drawing shows that a count is possible. Finding the maximum would also require proving that no drawing can do better.</p>
-      </section>
-
       <section id="kobon" class="scene kobon-scene" data-scene="Kobon geometry" aria-labelledby="kobonTitle">
         <div class="section-intro split-intro">
           <div>
@@ -112,7 +103,7 @@
               <g id="arrangementFaces"></g>
               <g id="arrangementLines"></g>
             </svg>
-            <p class="diagram-note">The drawing is approximate. The counts come from exact integer equations.</p>
+            <p class="diagram-note">Drag to pan or use the zoom buttons. Swipe to keep reading. After zooming, two fingers pan and pinch to zoom. Select a yard to inspect it.</p>
             <div class="tool-row" aria-label="Geometry controls">
               <button id="faceToggle" type="button" aria-pressed="true">Hide shading</button>
               <button id="zoomOut" type="button">Zoom out</button>
@@ -136,19 +127,31 @@
         </div>
       </section>
 
+      <section id="results" class="scene result-ledger" data-scene="Current results" aria-labelledby="resultsTitle">
+        <div class="section-intro">
+          <p class="kicker">Results</p>
+          <h2 id="resultsTitle">What we found</h2>
+        </div>
+        <div id="resultLedger" class="ledger" aria-live="polite"></div>
+        <p class="scope-note">A checked drawing shows that a count is possible. Finding the maximum would also require proving that no drawing can do better.</p>
+      </section>
+
       <section id="search" class="scene search-scene" data-scene="Structured search" aria-labelledby="searchTitle">
         <div class="section-intro split-intro">
           <div>
             <p class="kicker">Experiment two · trying to beat 93</p>
-            <h2 id="searchTitle">Four reported runs did not beat 93.</h2>
+            <h2 id="searchTitle">Can 18 fences make 94 yards?</h2>
           </div>
-          <p>This page reports four runs that started from Bader’s 93-yard construction and tried 1,500 changes each. Most moved one fence. Every 250 tries, a run restarted from Bader’s construction with three random changes. Their recorded summaries report no count above 93. The site includes those summaries, not the per-change logs, and the search explored only drawings close to Bader’s construction.</p>
+          <p>We can draw 93. Whether 94 is possible remains open. A checked computer proof rules out 94 for drawings unchanged by a one-third turn, where every pair of lines crosses and no three meet at a point. <a href="https://github.com/qsimeon/math-you-can-touch/blob/main/docs/RESEARCH.md#searching-every-crossing-pattern">Read the result and its limits.</a></p>
         </div>
+        <details class="research-detail"><summary>Research details: the gap, the searches, and their limits</summary>
+        <p class="scope-note">The crossing-pattern search also found a different straight-line drawing with 93 yards. The unrestricted searches for 94, and a control asking for 93, gave no answer in two hours. Those timeouts establish no impossibility.</p>
         <div class="gap-explainer" aria-labelledby="gapTitle">
           <h3 id="gapTitle">The gap between 76 and 93</h3>
           <p>Our original search used three random seeds and made 1,200 proposals per seed, usually changing one line. Each seed began with a small-coefficient drawing and restarted from a new one every 200 proposals. Its best drawing had 76 triangular yards. Bader’s earlier construction uses a threefold pattern and makes 93. An exact audit finds 58 bounded fence segments that do not border a yard in our 76 drawing and only three in the rebuilt published drawing. The count describes two drawings, not a method for moving between them.</p>
           <p>Several distinct fences may share one corner. A fan of 17 fences through one point, crossed by an eighteenth fence, traces 136 triangle outlines but forms only 16 undivided yards. The larger outlines contain fences inside them. <a href="https://github.com/qsimeon/math-you-can-touch/blob/main/docs/RESEARCH.md">Read the research notes</a> for the exact audit, Savchuk’s crossing-order method and our search of every crossing pattern. That search proved that no drawing with the threefold symmetry of Bader’s construction reaches 94 yards when every pair of fences crosses and no three share a corner. Finding 94 would require an exact drawing. Proving 93 is the maximum would require ruling out every legal 94-yard drawing.</p>
         </div>
+        <p class="scope-note">The table below records four earlier runs near Bader’s drawing. This site retains their summaries, not their per-change logs.</p>
         <details class="search-method"><summary>How the search chose its moves</summary>
           <p>We used Python’s seeded random generator, with seeds 17 and 42 for each of two methods. One changed a fence’s position. The other could change its direction or position. Each change adjusted one whole-number coefficient in the line equation ax + by + c = 0. Its size was the larger of 1 and floor(max(|a|, |b|) / d), with d chosen from 10, 100, 1,000 and 10,000 and either sign chosen at random.</p>
           <p>The recorded method kept ordinary moves when the count stayed level or rose. Every 250 proposals, it restarted from Bader’s construction and applied three changes, accepting a valid restart even if its count fell. Invalid drawings were rejected. Both exact counters had to agree. Each run allowed 1,500 proposals or 120 seconds, whichever came first. All four summaries report that they used their proposal budget. These settings describe the reported 6,000-change experiment, not the earlier search that found 76.</p>
@@ -161,6 +164,7 @@
             <tbody id="runRows"></tbody>
           </table>
         </div>
+        </details>
       </section>
 
       <section id="busy-beaver" class="scene beaver-scene" data-scene="Busy Beaver trace" aria-labelledby="beaverTitle">
@@ -191,11 +195,15 @@
             <div id="transitionTable" class="transition-table" aria-live="polite"></div>
           </section>
         </div>
+        <p class="scope-note">This robot stops after six steps. <a href="beaver.html">Change its rules in the playground.</a></p>
+        <details class="research-detail"><summary>The result across all 20,736 rule tables</summary>
         <div id="beaverSummary" class="beaver-summary" aria-live="polite"></div>
-        <p class="scope-note">The six-step robot shows a halt with four marked squares. Our bounded run tested all 20,736 two-state rule sets for at most 100 steps, and a third simulator agreed on those bounded outcomes. For 5,912 machines, it found neither a halt nor a repeat proof by step 100, so they are unresolved by our checker at that cutoff. A separate certificate check in the source repository proves that each of them never halts, and it certifies none of the machines that do halt. Together these confirm the established result <a href="https://oeis.org/A060843">S(2) = 6</a> (also listed by <a href="https://mathworld.wolfram.com/BusyBeaver.html">MathWorld</a>) for this standard blank-tape, two-state, two-symbol model: every halting machine stops within six steps. That reproduces a known result rather than finding a new one.</p>
+        <p class="scope-note">The six-step robot shows a halt with four marked squares. Our bounded run tested all 20,736 two-state rule sets for at most 100 steps, and a third simulator agreed on those bounded outcomes. For 5,912 machines, it found neither a halt nor a repeat proof by step 100, so they are unresolved by our checker at that cutoff. A separate certificate check in the source repository proves that each of them never halts, and it certifies none of the machines that do halt. Together these confirm the established result <a href="https://oeis.org/A060843">S(2) = 6</a> (also listed by <a href="https://mathworld.wolfram.com/BusyBeaver.html">MathWorld</a>) for this standard blank-tape, two-state, two-symbol model: every halting machine stops within six steps. These checks reproduce the established result.</p>
+        </details>
       </section>
 
-      <section id="claims" class="scene claim-scene" data-scene="Claim boundaries" aria-labelledby="claimsTitle">
+      <details class="evidence-details"><summary>What the checks establish, with sources and limits</summary>
+      <section id="claims" class="scene claim-scene" aria-labelledby="claimsTitle">
         <div class="section-intro">
           <p class="kicker">Reading the evidence</p>
           <h2 id="claimsTitle">Each kind of evidence proves one thing.</h2>
@@ -221,7 +229,7 @@
         </aside>
       </section>
 
-      <section id="sources" class="scene sources-scene" data-scene="Sources and limits" aria-labelledby="sourcesTitle">
+      <section id="sources" class="scene sources-scene" aria-labelledby="sourcesTitle">
         <div class="section-intro split-intro">
           <div><p class="kicker">Sources</p><h2 id="sourcesTitle">Sources and limits</h2></div>
           <p>Source links open in a new tab. The playgrounds use only the files included with this site and also work offline.</p>
@@ -232,6 +240,7 @@
         </div>
         <p id="formalStatus" class="formal-status"></p>
       </section>
+      </details>
     </div>
   </main>
 

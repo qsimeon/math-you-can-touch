@@ -64,11 +64,10 @@
     clear(el.resultLedger);
     const original = state.snapshots.find((snapshot) => snapshot.id === 'our76');
     const recovered = state.snapshots.find((snapshot) => snapshot.id === 'prior93');
-    const pilot = state.data.kobon.pilot;
     const cards = [
       { label: 'Our original search', value: `${formatNumber(original.score)} yards`, body: `Our local search produced ${formatNumber(original.score)} triangular yards with 18 fences.` },
       { label: 'Bader’s published construction', value: `${formatNumber(recovered.score)} yards`, body: `Johannes Bader’s published construction has ${formatNumber(recovered.score)} triangular yards. We rebuilt it with exact integer coordinates from Pavlo Savchuk’s LineOrder drawing and recounted it.` },
-      { label: 'Trying to beat it', value: `${formatNumber(pilot.best)} yards`, body: `${formatNumber(pilot.runs.length)} fixed search runs reported ${formatNumber(pilot.runs.reduce((total, run) => total + run.proposals, 0))} bounded integer changes to Bader’s construction. None reported more than ${formatNumber(pilot.best)}. The full search logs are not included with this site.` }
+      { label: 'The open question', value: '94 yards?', body: 'No general answer yet. The checked computer proof rules out one threefold-symmetric family, not every possible drawing.' }
     ];
     cards.forEach((card) => {
       const article = document.createElement('article');
@@ -91,7 +90,7 @@
   function setSnapshot(index) {
     state.snapshotIndex = Math.max(0, Math.min(index, state.snapshots.length - 1));
     state.selectedFace = null; state.viewBounds = null;
-    renderResults(); renderSnapshotPicker(); renderGeometry(); renderFaceInspector();
+    renderResults(); renderSnapshotPicker(); renderGeometry(); renderFaceInspector(); updateTouchNavigation();
   }
   function renderSnapshotPicker() {
     clear(el.snapshotPicker);
@@ -104,8 +103,10 @@
     el.snapshotReadout.textContent = `${text(snapshot.label, snapshot.id)}: ${formatNumber(snapshot.score)} yards from ${formatNumber(snapshot.lines.length)} fences.`;
   }
   function rawBounds(snapshot) {
-    const xs = [snapshot.bounds[0], snapshot.bounds[2], ...snapshot.triangles.flatMap((face) => face.vertices.map(([x]) => x))];
-    const ys = [snapshot.bounds[1], snapshot.bounds[3], ...snapshot.triangles.flatMap((face) => face.vertices.map(([, y]) => y))];
+    // Frame the yards, not far-away intersections that enclose no counted region.
+    const vertices = snapshot.triangles.flatMap(face => face.vertices);
+    const xs = vertices.length ? vertices.map(([x]) => x) : [snapshot.bounds[0], snapshot.bounds[2]];
+    const ys = vertices.length ? vertices.map(([, y]) => y) : [snapshot.bounds[1], snapshot.bounds[3]];
     const xMin = Math.min(...xs), xMax = Math.max(...xs), yMin = Math.min(...ys), yMax = Math.max(...ys);
     const width = Math.max(xMax - xMin, 1e-8), height = Math.max(yMax - yMin, 1e-8), padding = Math.max(width, height) * .06;
     return [xMin - padding, yMin - padding, xMax + padding, yMax + padding];
@@ -136,7 +137,7 @@
     clear(el.arrangementFaces); clear(el.arrangementLines);
     const selectedLines = selected === null ? [] : snapshot.triangles[selected].indices;
     if (state.facesVisible) snapshot.triangles.forEach((face, index) => {
-      const polygon = node('polygon', { points: face.vertices.map((point) => mapPoint(point, bounds).join(',')).join(' '), class: `arrangement-face${selected === index ? ' is-selected' : ''}`, tabindex: selected === index ? 0 : -1, role: 'button', 'aria-label': `Yard ${index + 1}, made by fences ${face.indices.map((line) => line + 1).join(', ')}` });
+      const polygon = node('polygon', { points: face.vertices.map((point) => mapPoint(point, bounds).join(',')).join(' '), class: `arrangement-face${selected === index ? ' is-selected' : ''}`, 'data-face': index, tabindex: selected === index ? 0 : -1, role: 'button', 'aria-label': `Yard ${index + 1}, made by fences ${face.indices.map((line) => line + 1).join(', ')}` });
       polygon.addEventListener('click', () => selectFace(index));
       polygon.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); selectFace(index); } });
       el.arrangementFaces.append(polygon);
@@ -148,12 +149,15 @@
     });
     const title = el.arrangement.querySelector('title'); const description = el.arrangement.querySelector('desc');
     title.textContent = `${snapshotName(snapshot)} line arrangement`;
-    description.textContent = `${formatNumber(snapshot.lines.length)} fences and ${formatNumber(snapshot.triangles.length)} triangular yards. Select a shaded yard to see its three fences.`;
+    description.textContent = `${formatNumber(snapshot.lines.length)} fences and ${formatNumber(snapshot.triangles.length)} triangular yards. Select a shaded yard to see its three fences. Drag to pan, pinch to zoom, or use the view buttons.`;
     el.zoomFace.disabled = selected === null;
   }
   function selectFace(index, focusList = false) {
+    const hadBoardFocus = el.arrangement.contains(document.activeElement);
     const count = currentSnapshot().triangles.length; state.selectedFace = ((index % count) + count) % count;
-    renderGeometry(); renderFaceInspector(); if (focusList) el.faceList.querySelector('[aria-pressed="true"]')?.focus();
+    renderGeometry(); renderFaceInspector();
+    if (focusList) el.faceList.querySelector('[aria-pressed="true"]')?.focus();
+    else if (hadBoardFocus) el.arrangement.focus({ preventScroll: true });
   }
   function renderFaceInspector() {
     const snapshot = currentSnapshot(); clear(el.faceList); el.faceCount.textContent = String(snapshot.triangles.length);
@@ -164,6 +168,11 @@
       button.addEventListener('click', () => selectFace(index, true)); item.append(button); el.faceList.append(item);
     });
     if (state.selectedFace === null) { el.faceExplanation.textContent = 'Click a shaded yard or pick one from the list. With the drawing focused, the left and right arrow keys step through them.'; el.supportDetails.hidden = true; return; }
+    const active = el.faceList.querySelector('[aria-pressed="true"]');
+    if (active) {
+      const listBox = el.faceList.getBoundingClientRect(), itemBox = active.getBoundingClientRect();
+      el.faceList.scrollTop += itemBox.top - listBox.top - (el.faceList.clientHeight - itemBox.height) / 2;
+    }
     const face = snapshot.triangles[state.selectedFace];
     el.faceExplanation.textContent = `Yard ${state.selectedFace + 1} is one triangular yard. The three highlighted fences form its sides, and no other fence crosses it.`;
     el.supportDetails.hidden = false; clear(el.supportLines);
@@ -171,15 +180,17 @@
   }
   function scaleBounds(factor) {
     const [xMin, yMin, xMax, yMax] = activeBounds(), cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
-    const width = (xMax - xMin) * factor, height = (yMax - yMin) * factor;
-    state.viewBounds = [cx - width / 2, cy - height / 2, cx + width / 2, cy + height / 2]; renderGeometry();
+    const originalWidth = rawBounds(currentSnapshot())[2] - rawBounds(currentSnapshot())[0];
+    const width = Math.max(originalWidth / 128, Math.min(originalWidth * 4, (xMax - xMin) * factor));
+    const height = (yMax - yMin) * width / (xMax - xMin);
+    state.viewBounds = [cx - width / 2, cy - height / 2, cx + width / 2, cy + height / 2]; renderGeometry(); updateTouchNavigation();
   }
   function zoomSelectedFace() {
     if (state.selectedFace === null) return;
     const vertices = currentSnapshot().triangles[state.selectedFace].vertices, xs = vertices.map(([x]) => x), ys = vertices.map(([, y]) => y);
     const span = Math.max(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys), 1e-6) * 1.8;
     const cx = (Math.max(...xs) + Math.min(...xs)) / 2, cy = (Math.max(...ys) + Math.min(...ys)) / 2;
-    state.viewBounds = [cx - span / 2, cy - span / 2, cx + span / 2, cy + span / 2]; renderGeometry();
+    state.viewBounds = [cx - span / 2, cy - span / 2, cx + span / 2, cy + span / 2]; renderGeometry(); updateTouchNavigation();
   }
   function exactSolutionJson(lines) {
     if (!lines.every((line) => Array.isArray(line) && line.length === 3 && line.every(isIntegerText) && !(line[0] === '0' && line[1] === '0'))) throw new Error('This geometry is not a valid exact line list.');
@@ -292,11 +303,89 @@
     if (active) { state.sceneIndex = Math.max(0, scenes().findIndex((scene) => scene.getBoundingClientRect().top >= -10)); updatePresentation(); }
   }
 
+  function updateTouchNavigation() {
+    el.arrangement.classList.toggle('view-engaged', state.viewBounds !== null);
+  }
+
+  function attachViewGestures() {
+    const svg = el.arrangement, pointers = new Map();
+    let gesture = null, moved = false, pressedFace = null;
+    const point = event => new DOMPoint(event.clientX, event.clientY).matrixTransform(svg.getScreenCTM().inverse());
+    const unmap = (point, bounds) => {
+      const [left, bottom, right, top] = bounds;
+      const scale = Math.min((VIEW.width - 2 * VIEW.padding) / (right - left), (VIEW.height - 2 * VIEW.padding) / (top - bottom));
+      return [(left + right) / 2 + (point.x - VIEW.width / 2) / scale,
+              (bottom + top) / 2 - (point.y - VIEW.height / 2) / scale];
+    };
+    const center = () => {
+      const points = [...pointers.values()].slice(0, 2);
+      return { x: points.reduce((sum, p) => sum + p.x, 0) / points.length,
+               y: points.reduce((sum, p) => sum + p.y, 0) / points.length };
+    };
+    const distance = () => {
+      const [a, b] = [...pointers.values()];
+      return b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
+    };
+    const begin = () => { gesture = pointers.size ? { bounds: [...activeBounds()], center: center(), distance: distance() } : null; };
+    const transform = (bounds, from, to, factor) => {
+      const raw = rawBounds(currentSnapshot()), originalWidth = raw[2] - raw[0];
+      const width = bounds[2] - bounds[0];
+      factor = Math.max(originalWidth / 128 / width, Math.min(originalWidth * 4 / width, factor));
+      const cx = (bounds[0] + bounds[2]) / 2, cy = (bounds[1] + bounds[3]) / 2;
+      const w = width * factor / 2, h = (bounds[3] - bounds[1]) * factor / 2;
+      const next = [cx - w, cy - h, cx + w, cy + h];
+      const anchor = unmap(from, bounds), target = unmap(to, next);
+      state.viewBounds = next.map((value, i) => value + anchor[i % 2] - target[i % 2]);
+      renderGeometry(); updateTouchNavigation();
+    };
+    svg.addEventListener('wheel', event => {
+      if (!event.ctrlKey && state.viewBounds === null && Math.abs(event.deltaX) <= Math.abs(event.deltaY)) return;
+      event.preventDefault();
+      if (gesture) return;
+      const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? svg.clientHeight : 1;
+      const p = point(event), scale = svg.getScreenCTM().a;
+      const factor = event.ctrlKey ? Math.exp(Math.max(-1, Math.min(1, event.deltaY * unit * .01))) : 1;
+      const destination = event.ctrlKey ? p : { x: p.x - event.deltaX * unit / scale, y: p.y - event.deltaY * unit / scale };
+      transform(activeBounds(), p, destination, factor);
+    }, { passive: false });
+    svg.addEventListener('pointerdown', event => {
+      if (event.button !== 0) return;
+      if (!pointers.size) { moved = false; pressedFace = event.target.getAttribute('data-face'); }
+      pointers.set(event.pointerId, point(event));
+      if (pointers.size > 1) moved = true;
+      try { svg.setPointerCapture(event.pointerId); } catch (_) { }
+      svg.focus({ preventScroll: true });
+      begin();
+    });
+    svg.addEventListener('pointermove', event => {
+      if (!pointers.has(event.pointerId) || !gesture) return;
+      pointers.set(event.pointerId, point(event));
+      const nextCenter = center(), nextDistance = distance();
+      moved ||= Math.hypot(nextCenter.x - gesture.center.x, nextCenter.y - gesture.center.y) * svg.getScreenCTM().a > (event.pointerType === 'touch' ? 10 : 4);
+      if (!moved) return;
+      transform(gesture.bounds, gesture.center, nextCenter,
+        gesture.distance > 0 && nextDistance > 0 ? gesture.distance / nextDistance : 1);
+    });
+    const end = event => { pointers.delete(event.pointerId); begin(); };
+    svg.addEventListener('pointerup', event => {
+      if (!moved && pointers.size === 1 && pressedFace !== null) {
+        selectFace(Number(pressedFace)); svg.focus({ preventScroll: true }); moved = true;
+      }
+      end(event);
+    });
+    svg.addEventListener('pointercancel', event => { moved = true; end(event); });
+    svg.addEventListener('lostpointercapture', end);
+    svg.addEventListener('click', event => {
+      if (moved) { event.preventDefault(); event.stopImmediatePropagation(); }
+    }, true);
+  }
+
   function bind() {
+    attachViewGestures();
     el.crossToggle.addEventListener('change', renderLesson);
     el.faceToggle.addEventListener('click', () => { state.facesVisible = !state.facesVisible; el.faceToggle.textContent = state.facesVisible ? 'Hide shading' : 'Show shading'; el.faceToggle.setAttribute('aria-pressed', String(state.facesVisible)); renderGeometry(); });
     el.zoomIn.addEventListener('click', () => scaleBounds(.7)); el.zoomOut.addEventListener('click', () => scaleBounds(1.4)); el.zoomFace.addEventListener('click', zoomSelectedFace);
-    el.resetGeometry.addEventListener('click', () => { state.viewBounds = null; renderGeometry(); }); el.downloadGeometry.addEventListener('click', downloadLines);
+    el.resetGeometry.addEventListener('click', () => { state.viewBounds = null; renderGeometry(); updateTouchNavigation(); }); el.downloadGeometry.addEventListener('click', downloadLines);
     el.arrangement.addEventListener('keydown', (event) => { if (event.metaKey || event.ctrlKey || event.altKey || !['ArrowLeft', 'ArrowRight'].includes(event.key) || !currentSnapshot().triangles.length) return; event.preventDefault(); event.stopPropagation(); selectFace((state.selectedFace ?? (event.key === 'ArrowRight' ? -1 : 0)) + (event.key === 'ArrowRight' ? 1 : -1)); });
     el.traceReset.addEventListener('click', resetTrace); el.traceStep.addEventListener('click', nextTrace); el.traceRun.addEventListener('click', runTrace);
     el.presentationToggle.addEventListener('click', () => setPresentation(!state.presentation)); el.previousScene.addEventListener('click', () => goScene(-1)); el.nextScene.addEventListener('click', () => goScene(1)); el.exitPresentation.addEventListener('click', () => setPresentation(false));
@@ -306,7 +395,7 @@
     const data = window.LEARNING_DATA;
     if (!validData(data)) { showProblem('The saved data failed its checks, so the page is hiding every number and drawing. Check data.js and reload.'); return; }
     state.data = data; state.snapshots = data.kobon.snapshots;
-    const preferred = state.snapshots.findIndex((snapshot) => /our|76|best/i.test(`${snapshot.id} ${snapshot.label || ''}`)); state.snapshotIndex = preferred >= 0 ? preferred : 0;
+    const preferred = state.snapshots.findIndex((snapshot) => snapshot.id === 'prior93'); state.snapshotIndex = preferred >= 0 ? preferred : 0;
     el.dataState.hidden = true; el.exhibition.hidden = false;
     renderLesson(); renderResults(); renderSnapshotPicker(); renderGeometry(); renderFaceInspector(); renderSearch(); renderBeaver(); renderSources(); bind();
   }

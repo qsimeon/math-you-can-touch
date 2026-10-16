@@ -3,10 +3,12 @@
   const G = window.FenceGeometry, $ = (id) => document.getElementById(id);
   const el = { tableTitle:$('tableTitle'), eyebrow:$('workbenchEyebrow'), workbenchTitle:$('fenceWorkbenchTitle'), workbenchDescription:$('workbenchDescription'), published:$('editPublished'), download:$('downloadFence'), readout:$('recordReadout'), picker:$('snapshotPicker'), svg:$('fenceSvg'), faces:$('fenceFaces'), lines:$('fenceLines'), handles:$('fenceHandles'), list:$('fenceList'), score:$('liveScore'), hint:$('dragHint'), edit:$('editMode'), pan:$('panMode'), left:$('turnLeft'), right:$('turnRight'), undo:$('undoFence'), reset:$('resetFence'), slider:$('motionSlider'), frameReadout:$('motionFrameReadout'), motionScore:$('motionScore'), changed:$('motionChanged'), resetMotion:$('resetMotion'), lesson:$('motionLesson'), next:$('nextFace'), previous:$('previousFace'), faceTitle:$('faceTitle'), faceExplanation:$('faceExplanation'), support:$('supportDetails'), supportLines:$('supportLines') };
   const PUZZLE = [[1n,0n,-220n],[0n,1n,-320n],[1n,-1n,20n],[0n,1n,-220n]];
+  const MIN_ZOOM = .25, MAX_ZOOM = 64;
   const ns = 'http://www.w3.org/2000/svg';
   const tag = (name, attributes = {}) => { const node = document.createElementNS(ns, name); Object.entries(attributes).forEach(([key, value]) => node.setAttribute(key, value)); return node; };
   const clone = (lines) => lines.map((line) => [...line]);
-  const state = { snapshots:[], snapshot:null, lines:[], original:[], selected:0, undo:[], mode:'edit', drag:null, pan:{x:0,y:0}, motion:null, motionIndex:null, frame:null, faces:[], selectedFace:null, kind:'warmup', origin:'warmup', sourceLabel:'', map:null, zoom:1, viewBounds:null, pivot:null, suppressClick:false, turnVector:null };
+  const differs = (lines, baseline) => lines.some((line,i) => line.some((value,j) => value !== baseline[i][j]));
+  const state = { snapshots:[], snapshot:null, lines:[], original:[], selected:0, undo:[], mode:'edit', drag:null, pan:{x:0,y:0}, motion:null, motionIndex:null, frame:null, faces:[], selectedFace:null, kind:'warmup', origin:'warmup', sourceLabel:'', map:null, zoom:1, viewBounds:null, pivot:null, suppressClick:false, turnVector:null, scored:null, touches:new Map(), navigating:false, pinch:null };
   const number = (value) => Number(value);
   const rawLines = (record) => record.lines.map((row) => row.map(BigInt));
   const formatOffset = (offset) => Number(offset) > 0 ? `+${offset}` : String(offset);
@@ -75,12 +77,15 @@
     el.score.textContent = scoreLabel(report.score);
     el.readout.textContent = sourceDescription(report.score);
     if (state.kind === 'motion' && report.score !== state.frame.score) throw new Error(`saved frame score mismatch: expected ${state.frame.score}, got ${report.score}`);
+    state.scored = state.lines;
     return report;
   }
 
-  function drawSvg({ geometryChanged = false } = {}) {
+  function drawSvg({ geometryChanged = false, viewOnly = false } = {}) {
     let report;
-    try { report = updateExact(); } catch (error) { el.score.textContent = `That move was refused: ${error.message}`; return false; }
+    // Pan and zoom leave the lines untouched, so the last exact count still describes them.
+    if (viewOnly && state.scored === state.lines) report = { faces:state.faces };
+    else try { report = updateExact(); } catch (error) { el.score.textContent = `That move was refused: ${error.message}`; return false; }
     if (geometryChanged) clearFace();
     setMode(state.mode);
     const map = mapFor(state.lines);
@@ -129,7 +134,7 @@
   }
 
   function select(index, { focusBoard = false } = {}) {
-    state.selected = index; state.pivot = null; state.turnVector = null; drawSvg();
+    state.selected = index; state.pivot = null; state.turnVector = null; drawSvg({ viewOnly:true });
     if (focusBoard) el.svg.focus({ preventScroll:true });
   }
 
@@ -142,10 +147,11 @@
     el.supportLines.replaceChildren();
     face.forEach((lineIndex) => { const item = document.createElement('li'); item.textContent = `Fence ${lineIndex + 1}: ${lineText(state.lines[lineIndex])}`; el.supportLines.append(item); });
     el.support.hidden = false;
-    drawSvg();
+    drawSvg({ viewOnly:true });
   }
 
   function renderList() {
+    const focused = [...el.list.querySelectorAll('button')].indexOf(document.activeElement);
     el.list.replaceChildren();
     state.lines.forEach((line, index) => {
       const button = document.createElement('button');
@@ -154,6 +160,7 @@
       button.addEventListener('click', () => select(index, { focusBoard:true }));
       const item = document.createElement('li'); item.append(button); el.list.append(item);
     });
+    if (focused >= 0) el.list.querySelectorAll('button')[focused]?.focus({ preventScroll:true });
     el.undo.disabled = !state.undo.length;
   }
 
@@ -171,7 +178,7 @@
 
   function applyCandidate(candidate, baseline, { recordUndo = false } = {}) {
     try { G.score(candidate); } catch (error) { return reject(error, baseline); }
-    if (recordUndo && candidate.some((line,i) => line.some((value,j) => value !== baseline[i][j]))) state.undo.push({ lines:clone(baseline), kind:state.kind });
+    if (recordUndo && differs(candidate, baseline)) state.undo.push({ lines:clone(baseline), kind:state.kind });
     state.lines = candidate;
     markEdited();
     return drawSvg({ geometryChanged:true });
@@ -212,7 +219,7 @@
       const yard = yardAt(svgPoint(event));
       if (yard >= 0) { state.suppressClick = true; showFace(yard); return; }
     }
-    if (state.lines.some((line,i) => line.some((value,j) => value !== drag.lines[i][j]))) {
+    if (differs(state.lines, drag.lines)) {
       state.undo.push({ lines:clone(drag.lines), kind:drag.kind });
     } else { state.kind = drag.kind; applyWorkbench(state.kind, state.sourceLabel); }
     renderList();
@@ -239,47 +246,117 @@
     catch (error) { return reject(error, drag.lines); }
   }
 
+  function zoomAt(point, factor) {
+    const zoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, state.zoom * factor)), ratio = zoom / state.zoom;
+    // Keep the board point under the cursor or fingers fixed: mapFor centers the view at (360, 240).
+    state.pan = { x:point.x - 360 - (point.x - 360 - state.pan.x) * ratio, y:point.y - 240 - (point.y - 240 - state.pan.y) * ratio };
+    state.zoom = zoom; state.pivot = null;
+  }
+
+  function onWheel(event) {
+    // Plain vertical scrolling stays with the page unless the reader chose Pan view.
+    if (!event.ctrlKey && state.mode !== 'pan' && Math.abs(event.deltaY) >= Math.abs(event.deltaX)) return;
+    event.preventDefault();
+    if (state.drag || state.navigating) return;
+    const rect = el.svg.getBoundingClientRect(), pixels = [1, 16, rect.height][event.deltaMode] ?? 1, units = pixels * 720 / rect.width;
+    if (event.ctrlKey) zoomAt(svgPoint(event), Math.exp(-Math.max(-50, Math.min(50, event.deltaY * pixels)) / 100));
+    else state.pan = { x:state.pan.x - event.deltaX * units, y:state.pan.y - event.deltaY * units };
+    drawSvg({ viewOnly:true });
+  }
+
+  function pinchFrame() {
+    const [a, b] = [...state.touches.values()];
+    return { mid:{ x:(a.x + b.x) / 2, y:(a.y + b.y) / 2 }, distance:Math.max(1, Math.hypot(a.x - b.x, a.y - b.y)) };
+  }
+
+  function startNavigation(event) {
+    event.preventDefault();
+    try { el.svg.setPointerCapture(event.pointerId); } catch (_) { }
+    if (!state.navigating && state.drag) {
+      // A second finger means the first was steering the view, not editing a fence.
+      const drag = state.drag;
+      state.drag = null; state.kind = drag.kind; state.pivot = drag.pivot;
+      applyWorkbench(state.kind, state.sourceLabel);
+      if (differs(state.lines, drag.lines)) { state.lines = clone(drag.lines); drawSvg({ geometryChanged:true }); }
+      if (drag.selected !== state.selected) select(drag.selected);
+    }
+    state.navigating = true; state.suppressClick = true; state.pinch = pinchFrame();
+  }
+
+  function movePinch() {
+    const now = pinchFrame(), last = state.pinch;
+    zoomAt(last.mid, now.distance / last.distance);
+    state.pan = { x:state.pan.x + now.mid.x - last.mid.x, y:state.pan.y + now.mid.y - last.mid.y };
+    state.pinch = now; drawSvg({ viewOnly:true });
+  }
+
+  function endTouch(event) {
+    if (!state.touches.delete(event.pointerId) || !state.navigating) return false;
+    state.navigating = state.touches.size > 0;
+    state.pinch = state.touches.size > 1 ? pinchFrame() : null;
+    return true;
+  }
+
   function attachEditor() {
+    el.svg.addEventListener('wheel', onWheel, { passive:false });
     el.svg.addEventListener('pointerdown', (event) => {
+      if (event.pointerType === 'touch') {
+        if (event.isPrimary) { state.touches.clear(); state.navigating = false; }
+        state.touches.set(event.pointerId, svgPoint(event));
+        if (state.touches.size > 1) { startNavigation(event); return; }
+      }
       if (event.button !== 0 || state.drag) return;
       state.suppressClick = false;
       const handle = event.target.closest?.('.fence-handle,.turn-handle,.handle-hit');
       const line = event.target.closest?.('[data-index]');
       event.preventDefault();
-      const point = svgPoint(event), yard = yardAt(point), turning = (handle?.classList.contains('turn-handle') || handle?.classList.contains('turn-hit'));
-      if (yard < 0 && line && Number(line.dataset.index) !== state.selected) select(Number(line.dataset.index));
+      const point = svgPoint(event), yard = yardAt(point), turning = (handle?.classList.contains('turn-handle') || handle?.classList.contains('turn-hit')), selected = state.selected;
+      // Inside a yard a tap picks the yard, so the pressed fence is selected only once the press becomes a drag.
+      const pressed = !handle && line && Number(line.dataset.index) !== state.selected ? Number(line.dataset.index) : null;
+      if (yard < 0 && pressed !== null) select(pressed);
       el.svg.focus({preventScroll:true});
       try { el.svg.setPointerCapture(event.pointerId); } catch (_) { }
-      state.drag = { id:event.pointerId, point, lines:clone(state.lines), kind:state.kind,
+      state.drag = { id:event.pointerId, point, client:{ x:event.clientX, y:event.clientY }, slop:event.pointerType === 'touch' ? 10 : 4, pressed:yard < 0 ? null : pressed, lines:clone(state.lines), kind:state.kind, selected,
         pan:{...state.pan}, pivot:state.pivot && [...state.pivot], action:state.mode === 'pan' ? 'pan' : turning ? 'turn' : handle || line ? 'move' : 'select', moved:false };
     });
     el.svg.addEventListener('pointermove', (event) => {
+      if (state.touches.has(event.pointerId)) {
+        state.touches.set(event.pointerId, svgPoint(event));
+        if (state.navigating) { if (state.pinch) movePinch(); return; }
+      }
       if (!state.drag || event.pointerId !== state.drag.id) return;
       const point = svgPoint(event), deltaX = point.x - state.drag.point.x, deltaY = point.y - state.drag.point.y;
-      state.drag.moved ||= Math.abs(deltaX) + Math.abs(deltaY) > 3;
-      if (!state.drag.moved) return;
+      if (!state.drag.moved) {
+        if (Math.hypot(event.clientX - state.drag.client.x, event.clientY - state.drag.client.y) <= state.drag.slop) return;
+        state.drag.moved = true;
+        if (state.drag.action === 'move' && state.drag.pressed !== null) { select(state.drag.pressed); state.drag.pivot = null; }
+      }
       if (state.drag.action === 'pan') {
         state.pan = { x:state.drag.pan.x + deltaX, y:state.drag.pan.y + deltaY };
-        drawSvg(); return;
+        drawSvg({ viewOnly:true }); return;
       }
       if (state.drag.action === 'select') return;
       if (state.drag.action === 'turn') turnBy(point, state.drag);
       else moveBy(point, state.drag.lines);
     });
-    el.svg.addEventListener('pointerup', (event) => finishDrag(event, false));
-    el.svg.addEventListener('pointercancel', (event) => finishDrag(event, true));
-    el.svg.addEventListener('lostpointercapture', (event) => finishDrag(event, true));
+    el.svg.addEventListener('pointerup', (event) => endTouch(event) || finishDrag(event, false));
+    el.svg.addEventListener('pointercancel', (event) => endTouch(event) || finishDrag(event, true));
+    el.svg.addEventListener('lostpointercapture', (event) => endTouch(event) || finishDrag(event, true));
     el.edit.onclick = () => setMode('edit'); el.pan.onclick = () => setMode('pan');
     $('slideLeft').onclick = () => slide(-1); $('slideRight').onclick = () => slide(1);
-    $('zoomIn').onclick = () => { state.zoom = Math.min(64, state.zoom * 1.5); state.pivot = null; drawSvg(); };
-    $('zoomOut').onclick = () => { state.zoom = Math.max(.25, state.zoom / 1.5); state.pivot = null; drawSvg(); };
+    $('zoomIn').onclick = () => { zoomAt({ x:360, y:240 }, 1.5); drawSvg({ viewOnly:true }); };
+    $('zoomOut').onclick = () => { zoomAt({ x:360, y:240 }, 1 / 1.5); drawSvg({ viewOnly:true }); };
     $('fitView').onclick = () => { state.viewBounds = bounds(state.lines); state.pivot = null; state.zoom = 1; state.pan = {x:0,y:0}; drawSvg(); };
     $('focusFace').onclick = focusFace; $('warmup').onclick = loadWarmup;
     el.left.onclick = () => turn(-1); el.right.onclick = () => turn(1); el.published.onclick = loadPublished; el.download.onclick = downloadExact;
     el.undo.onclick = () => { if (state.undo.length) { const previous = state.undo.pop(); state.pivot = null; state.lines = previous.lines; state.kind = previous.kind; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); } };
-    el.reset.onclick = () => { state.pivot = null; state.zoom = 1; state.viewBounds = bounds(state.original); state.lines = clone(state.original); state.kind = state.origin; state.undo = []; state.pan = { x:0, y:0 }; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); };
+    el.reset.onclick = () => { state.pivot = null; state.zoom = 1; state.viewBounds = bounds(state.original); if (differs(state.lines, state.original)) state.undo.push({ lines:clone(state.lines), kind:state.kind }); state.lines = clone(state.original); state.kind = state.origin; state.pan = { x:0, y:0 }; applyWorkbench(state.kind, state.sourceLabel); drawSvg({ geometryChanged:true }); };
     el.svg.closest('.viewer-shell').addEventListener('keydown', (event) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
+      if (event.target.closest('input,select,textarea,[contenteditable="true"]')) return;
+      if (event.metaKey || event.ctrlKey || event.altKey) {
+        if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 'z' && state.undo.length) { event.preventDefault(); el.undo.click(); }
+        return;
+      }
       if (event.key === 'ArrowDown' || event.key === 'ArrowRight') { event.preventDefault(); select((state.selected + 1) % state.lines.length); }
       if (event.key === 'ArrowUp' || event.key === 'ArrowLeft') { event.preventDefault(); select((state.selected + state.lines.length - 1) % state.lines.length); }
       if (event.key === '[' || event.key === ']') { event.preventDefault(); slide(event.key === '[' ? -1 : 1); }

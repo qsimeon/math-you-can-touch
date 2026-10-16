@@ -79,3 +79,27 @@ td select { width: 100%; padding: .2rem; font-size: .86rem; }
 .intro { padding: 1.5rem 0; }
 .intro h1 { font-size: clamp(2.8rem, 4.7vw, 4rem); }
 .prediction-panel #predictionFeedback { margin-bottom: 0; }
+
+/* Keep the next action beside the thing it changes, before the explanation. */
+.control-row { background: var(--board); }
+@media(max-width: 760px) {
+  .intro { padding: 1.1rem 0; gap: .7rem; }
+  .intro h1 { font-size: 2.5rem; }
+  .intro .eyebrow { margin-bottom: 0; }
+  .scene-heading { gap: .5rem; padding-block: .75rem; }
+  .scene-heading h2 { font-size: 1.4rem; }
+  .prediction-panel { padding-block: .6rem; }
+  .prediction-panel > .eyebrow { display: none; }
+  .control-row { padding-block: .65rem; gap: .4rem; }
+  .control-row button { padding-inline: .65rem; font-size: .85rem; }
+  .semantic-tape { padding-top: 1rem; }
+  .tape-heading { margin-bottom: 1.6rem; }
+}
+@media(max-width: 380px) {
+  .intro h1 { font-size: 2.15rem; }
+  .intro > p:last-child { font-size: .95rem; }
+  .prediction button { font-size: .8rem; padding-inline: .5rem; }
+  .prediction-panel .presets { gap: .2rem; }
+  .prediction-panel .presets label { font-size: .8rem; }
+  .prediction-panel .presets select { font-size: .85rem; }
+}

@@ -28,6 +28,10 @@ class FenceBrowserTests(unittest.TestCase):
         page.locator('#fenceSvg').wait_for()
         return page
 
+    def open_motion(self, page):
+        if page.locator('#motionLesson').get_attribute('open') is None:
+            page.locator('#motionLesson > summary').click()
+
     def assert_clean(self):
         self.assertEqual(self.errors, [])
 
@@ -37,7 +41,7 @@ class FenceBrowserTests(unittest.TestCase):
         deck = page.locator('.page-head .deck').inner_text()
         self.assertIn('Start with four', deck)
         self.assertIn('Choose any fence', deck)
-        self.assertIn('not a proof of the maximum', deck)
+        self.assertIn('not a proof of the maximum', page.locator('.source-note').inner_text())
         nav = page.get_by_role('navigation', name='Explore the project')
         self.assertEqual(nav.get_by_role('link', name='Experiment story').get_attribute('href'), 'index.html')
         self.assertEqual(nav.get_by_role('link', name='Tape robot').get_attribute('href'), 'beaver.html')
@@ -51,6 +55,7 @@ class FenceBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator('#tableTitle').inner_text(), '4 fences. A small warm-up.')
         self.assertIn('Live warm-up', page.locator('#recordReadout').inner_text())
         frame = DATA['kobon']['motion']['frames'][0]
+        self.open_motion(page)
         page.locator('#motionSlider').fill('0')
         self.assertEqual(page.locator('#motionFrameReadout').inner_text(), '-40')
         self.assertEqual(page.locator('#motionScore').inner_text(), str(frame['score']))
@@ -58,6 +63,7 @@ class FenceBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator('#fenceFaces polygon').count(), frame['score'])
         self.assertIn('Saved position -40', page.locator('#liveScore').inner_text())
         self.assertIn('offset -40', page.locator('#recordReadout').inner_text())
+        self.open_motion(page)
         page.locator('#motionSlider').fill('20')
         self.assertEqual(page.locator('#fenceFaces polygon').count(), 93)
         self.assert_clean()
@@ -207,6 +213,7 @@ class FenceBrowserTests(unittest.TestCase):
         self.assertEqual(page.locator('#fenceList button').evaluate_all('(nodes) => nodes.map(n => n.dataset.equation)'), snapshot)
         self.assertIn('Saved Starter', page.locator('#liveScore').inner_text())
 
+        self.open_motion(page)
         page.locator('#motionSlider').fill('0')
         motion = page.locator('#fenceList button').evaluate_all('(nodes) => nodes.map(n => n.dataset.equation)')
         page.locator('#turnRight').click()
@@ -337,15 +344,17 @@ class FenceBrowserTests(unittest.TestCase):
         self.assertIn('Fences ', page.locator('#faceList button').first.inner_text())
         self.assertTrue(all(text.startswith('Fence ') for text in page.locator('#supportLines li').all_inner_texts()))
         page.keyboard.press('ArrowLeft')
-        self.assertIn('Yard 76 is', page.locator('#faceExplanation').inner_text())
+        self.assertIn('Yard 93 is', page.locator('#faceExplanation').inner_text())
         page.locator('#faceToggle').click()
         self.assertEqual('Show shading', page.locator('#faceToggle').inner_text())
         page.locator('#faceToggle').click()
         self.assertEqual('Hide shading', page.locator('#faceToggle').inner_text())
-        self.assertIn('unresolved by our checker', page.locator('#busy-beaver .scope-note').inner_text())
+        page.locator('#busy-beaver details > summary').click()
+        page.locator('.evidence-details > summary').click()
+        self.assertIn('unresolved by our checker', page.locator('#busy-beaver details .scope-note').inner_text())
         self.assertIn('unresolved by this checker', page.locator('.halt-note').inner_text())
         self.assertIn('standard two-state result settles nonhalting only when applied separately', page.locator('.halt-note').inner_text())
-        self.assertEqual('https://oeis.org/A060843', page.locator('#busy-beaver .scope-note a').first.get_attribute('href'))
+        self.assertEqual('https://oeis.org/A060843', page.locator('#busy-beaver details .scope-note a').first.get_attribute('href'))
         self.assert_clean(); page.close()
 
     def test_compact_handles_keep_touch_targets_and_rotate_after_resize(self):

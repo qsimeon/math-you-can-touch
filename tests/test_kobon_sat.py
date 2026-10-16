@@ -4,6 +4,7 @@ import random
 import unittest
 from fractions import Fraction
 from itertools import combinations, product
+from pathlib import Path
 
 from tools.kobon_sat import (
     build,
@@ -133,7 +134,7 @@ class Charts(unittest.TestCase):
     def test_new_93_is_not_bader_in_disguise(self):
         import json
         from tools.compare_93 import bader_variants
-        with open("candidates/sat-93-a/solution.json", encoding="utf-8") as stream:
+        with open(Path(__file__).resolve().parents[1] / "candidates/sat-93-a/solution.json", encoding="utf-8") as stream:
             lines = [tuple(l) for l in json.load(stream)["lines"]]
         signs = signotope_from_lines(lines)[1]
         self.assertEqual(len(triangles(18, signs)), 93)
@@ -411,9 +412,9 @@ class Straightening(unittest.TestCase):
         signs = signotope_from_lines(all_crossing_start())[1]
         lines = straighten(18, signs, margin=0.025, seed=5)
         self.assertEqual(max(abs(v) for line in lines for v in line), 42)
-        self.assertEqual(verify_file("candidates/small-93/solution.json")["score"], 93)
+        self.assertEqual(verify_file(Path(__file__).resolve().parents[1] / "candidates/small-93/solution.json")["score"], 93)
         import json
-        with open("candidates/small-93/solution.json", encoding="utf-8") as stream:
+        with open(Path(__file__).resolve().parents[1] / "candidates/small-93/solution.json", encoding="utf-8") as stream:
             self.assertEqual([tuple(l) for l in json.load(stream)["lines"]], lines)
 
 

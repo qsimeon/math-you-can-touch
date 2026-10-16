@@ -16,7 +16,7 @@
   <noscript><p class="notice">This playground needs JavaScript to draw and count the fences.</p></noscript>
   <header class="page-head">
     <div><p class="eyebrow">Playground 1 · Fences</p><h1>Move one fence.<br>What changes?</h1></div>
-    <p class="deck">Start with four fences that run forever in both directions. Choose any fence and move it. A shaded triangle counts as a yard only if no other fence cuts through it. Then try Bader’s 18-fence construction, a published example with 93 yards, not a proof of the maximum.</p>
+    <p class="deck">Start with four fences. Choose any fence and drag it. Only triangles with no fence cutting through them count as yards.</p>
   </header>
   <section id="viewerShell" class="viewer-shell" aria-labelledby="tableTitle">
     <div class="board-heading"><h2 id="tableTitle">4 fences. A small warm-up.</h2><p id="liveScore" class="live-score" aria-live="polite">Counting…</p><div class="quick-start" role="group" aria-label="Choose a board"><button id="quickWarmup" type="button" aria-pressed="true">Try 4 fences</button><button id="quickPublished" type="button" aria-pressed="false">Explore 93 yards</button></div></div>
@@ -30,7 +30,7 @@
           <g id="fenceFaces"></g><g id="fenceLines"></g><g id="fenceHandles"></g>
         </svg>
         <div class="view-actions" role="group" aria-label="Board view controls"><button id="editMode" type="button" aria-pressed="true">Move fences</button><button id="panMode" type="button" aria-pressed="false">Pan view</button><button id="zoomIn" type="button" aria-label="Zoom in">+</button><button id="zoomOut" type="button" aria-label="Zoom out">−</button><button id="fitView" type="button">Fit</button></div>
-        <p id="dragHint" class="hint">Drag a fence to slide it. Drag the red ↻ handle to turn it around the center dot.</p>
+        <p id="dragHint" class="hint">Drag a fence to slide it. Drag the red ↻ handle to turn it around the center dot.</p><p class="hint gesture-hint">Swipe empty space to scroll the page. Two fingers move the view; pinch to zoom. Fit shows everything.</p>
       </div>
       <aside class="fence-picker" aria-labelledby="fencePickerTitle"><p class="eyebrow">Fences</p><h3 id="fencePickerTitle">Your fences</h3><ol id="fenceList"></ol>
         <div class="edit-actions" role="group" aria-label="Fence editing controls"><button id="slideLeft" type="button">Slide −</button><button id="slideRight" type="button">Slide +</button><button id="turnLeft" type="button">Turn ↺ 10°</button><button id="turnRight" type="button">Turn ↻ 10°</button><button id="undoFence" type="button" disabled>Undo</button><button id="resetFence" type="button">Reset warm-up</button></div>
@@ -46,12 +46,12 @@
   </section>
   <section id="fenceWorkbench" class="lesson" aria-labelledby="fenceWorkbenchTitle">
     <div><p id="workbenchEyebrow" class="eyebrow">Warm-up</p><h2 id="fenceWorkbenchTitle">Move a fence and watch yards appear and vanish.</h2><p id="workbenchDescription">Turn a fence with its red handle until a yard disappears. Then press Undo to bring it back.</p><div class="button-row"><button id="editPublished" type="button">Try Bader’s 93</button><button id="warmup" type="button">Back to four fences</button></div></div>
-    <div id="controls"><p class="eyebrow">Saved drawings</p><div id="snapshotPicker" class="snapshot-picker" role="group" aria-label="Saved geometry drawings"></div><p class="source-note">The 93-yard arrangement reproduces Johannes Bader’s published construction. We rebuilt it with exact whole-number coordinates from Pavlo Savchuk’s <a href="https://raw.githubusercontent.com/zegalur/line-order/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/gallery/imgs/kobon_18_93tri_lines.svg">LineOrder drawing</a>. Its source is <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Rounding the drawing’s coordinates into exact line equations is our modification. The 76-yard drawing came from our own search. Neither is a new record.</p></div>
+    <div id="controls"><p class="eyebrow">Saved drawings</p><div id="snapshotPicker" class="snapshot-picker" role="group" aria-label="Saved geometry drawings"></div><p class="source-note">The 93-yard arrangement reproduces Johannes Bader’s published construction, not a proof of the maximum. We rebuilt it with exact whole-number coordinates from Pavlo Savchuk’s <a href="https://raw.githubusercontent.com/zegalur/line-order/2631b8793eb351be2ad6b8a91b7194eeb67e25bb/gallery/imgs/kobon_18_93tri_lines.svg">LineOrder drawing</a>. Its source is <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>. Rounding the drawing’s coordinates into exact line equations is our modification. The 76-yard drawing came from our own search. Neither is a new record.</p></div>
   </section>
-  <section id="motionLesson" class="lesson motion-lesson" hidden aria-labelledby="motionTitle">
+  <details id="motionLesson" class="motion-lesson" hidden><summary>Watch one fence move through 41 saved positions</summary><div class="lesson" aria-labelledby="motionTitle">
     <div><p class="eyebrow">Fence 1 · 41 saved positions</p><h2 id="motionTitle">Slide one fence and the count drops.</h2><p>Drag the slider to move fence 1 through 41 saved positions. Only three of them, at offsets −2, 0 and +2, keep all 93 yards. Each saved position is recounted when it loads. Moving any fence starts your own copy, which is counted live.</p></div>
     <div class="motion-controls"><label for="motionSlider">Saved position <output id="motionFrameReadout">0</output></label><input id="motionSlider" type="range" min="0" max="0" value="0" step="1"><p><strong id="motionScore">93</strong> yards in this saved position (before your edits)</p><p><strong id="motionChanged">+0 / −0</strong> yards gained / lost in this saved position versus the original 93</p><button id="resetMotion" type="button">Back to the original position</button></div>
-  </section>
+  </div></details>
   <footer><p>The fences keep going past the edge of the board. Panning and zooming change only what you see.</p><a href="index.html">Read the experiment story</a> · <a href="beaver.html">Program the tape robot →</a></footer>
 </main>
 <script src="data.js"></script>

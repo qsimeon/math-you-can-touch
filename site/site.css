@@ -181,3 +181,30 @@ body.presentation-active .scene { min-height: 100vh; padding-top: max(7rem, 12vh
 }
 @media (pointer: coarse) { button { min-height: 3rem; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { transition-duration: .01ms !important; animation-duration: .01ms !important; } }
+
+/* Lead with the two things a visitor can try. */
+.opening { display: block; min-height: auto; padding-block: clamp(2rem, 5vw, 4.5rem); }
+.opening h1 { max-width: none; font-size: clamp(2.8rem, 6vw, 5.2rem); line-height: 1; margin-bottom: 1rem; }
+.opening .deck { max-width: 46rem; font-size: clamp(1.05rem, 1.6vw, 1.25rem); }
+.playground-previews { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin: 2rem 0 1.5rem; }
+.playground-preview { display: flex; flex-direction: column; gap: .6rem; color: var(--ink); text-decoration: none; min-width: 0; }
+.playground-preview img { width: 100%; height: auto; object-fit: contain; background: #e8eee6; border: 1px solid var(--rule); }
+.preview-title { display: flex; justify-content: space-between; font-family: var(--serif); font-size: clamp(1.4rem, 2.4vw, 2rem); }
+.playground-preview > span:last-child { color: var(--ink-soft); line-height: 1.5; }
+.playground-preview:hover .preview-title { text-decoration: underline; text-underline-offset: .2em; }
+.scene:not(.opening) { padding-block: clamp(2.5rem, 6vw, 5rem); }
+.research-detail { margin-top: 1.5rem; border-top: 1px solid var(--rule); padding-top: .5rem; }
+summary { min-height: 44px; padding-block: .8rem; cursor: pointer; color: var(--vermilion-deep); line-height: 1.5; }
+summary:focus-visible { outline: 3px solid var(--vermilion); outline-offset: 4px; }
+.evidence-details { width: var(--edge); margin: 0 auto 3rem; border-block: 1px solid var(--rule); }
+.evidence-details .scene { width: 100%; }
+@media (max-width: 600px) {
+  .playground-previews { grid-template-columns: 1fr; gap: 2rem; margin-top: 1.5rem; }
+  .playground-preview .preview-title { order: -1; }
+  .playground-preview img { max-height: 220px; object-fit: contain; background: #e8eee6; }
+  .opening .deck { margin-bottom: 0; }
+}
+
+#arrangement { touch-action: pan-y; cursor: grab; }
+#arrangement.view-engaged { touch-action: none; }
+#arrangement:active { cursor: grabbing; }

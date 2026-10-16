@@ -1,6 +1,6 @@
 # Research notes
 
-The playgrounds lead to two research questions. With 18 straight lines, can we make more than the 93 undivided triangular regions in Johannes Bader's known construction, or show that 93 is the most? With a two-state tape robot, can our own checker explain why every machine that has not halted by step 100 will never halt? The robot question has a checked answer, described at the end of this note. The line question remains open. A direct search of crossing patterns has narrowed it: no drawing with the threefold symmetry of Bader's 93 reaches 94, and the same search found a different 93 that can be drawn with straight lines.
+The playgrounds lead to two research questions. With 18 straight lines, can we make more than the 93 undivided triangular regions in Johannes Bader's known construction, or show that 93 is the most? With a two-state tape robot, can our own checker explain why every machine that has not halted by step 100 will never halt? The robot question has a checked answer, described at the end of this note. The line question remains open. A direct search of crossing patterns has narrowed it: no threefold-symmetric drawing in which every pair of lines crosses and no three meet at a point reaches 94, and the same search found a different 93 that can be drawn with straight lines.
 
 ## The 76-to-93 gap
 
@@ -55,7 +55,7 @@ Before the 18-line run, the search was tested on 3 to 17 lines, where the answer
 
 **No threefold 94.** Bader's 93 looks the same after a turn by a third of a circle. Among drawings with that symmetry, the search found a 93 within seconds and then proved that none has 94. Four different solvers, using three ways of encoding the count, reached the same answer within 40 minutes. A standalone solver repeated the run while writing a 648 MB step-by-step proof, and an independent checker, drat-trim, verified that proof in 16 minutes. Therefore no threefold-symmetric drawing of 18 lines in which every pair crosses and no three meet has 94 triangles. In a symmetric drawing of straight lines, the turn moves triangles in groups of three, and only a triangle around the centre of the turn can stay in place. Since 94 = 3 × 31 + 1, a symmetric 94 would have needed exactly one central triangle. Neither paper this work builds on contains this result, and we have not searched the wider literature. It is a checked computation that no mathematician has yet reviewed.
 
-**Two new 93s.** The 93s the solver returned differ from Bader's. A comparison tool checks every version of Bader's drawing that can be made by turning it, mirroring it, separating his three parallel pairs in 64 ways, or sending each of his lines to infinity in turn, and none matches. A second test ignores those choices. Adding the line at infinity as a nineteenth line and counting again gives 105 triangles for every version of Bader's drawing and 102 for the first solver 93, so that drawing differs from his even in the projective plane. A new straightener turned it into straight lines with every coefficient between −70 and 70 (`candidates/sat-93-a`), and both exact counters find 93 triangles. The straightener fixes the slopes and solves a linear program for the offsets, then fixes the offsets and solves for the slopes, and repeats until every crossing lies on the correct side. It then rounds to small integers and recounts exactly. Applied to Bader's own pattern, it redraws his 93 with every coefficient between −42 and 42 (`candidates/small-93`), where the reconstruction needed 736,030,939. The other solver 93 did not straighten in 480 attempts, so it remains a drawing with curves. We have not checked whether either new 93 appears elsewhere.
+**Two different 93s.** The 93s the solver returned differ from Bader's. A comparison tool checks every version of Bader's drawing that can be made by turning it, mirroring it, separating his three parallel pairs in 64 ways, or sending each of his lines to infinity in turn, and none matches. A second test ignores those choices. Adding the line at infinity as a nineteenth line and counting again gives 105 triangles for every version of Bader's drawing and 102 for the first solver 93, so that drawing differs from his even in the projective plane. A new straightener turned it into straight lines with every coefficient between −70 and 70 (`candidates/sat-93-a`), and both exact counters find 93 triangles. The straightener fixes the slopes and solves a linear program for the offsets, then fixes the offsets and solves for the slopes, and repeats until every crossing lies on the correct side. It then rounds to small integers and recounts exactly. Applied to Bader's own pattern, it redraws his 93 with every coefficient between −42 and 42 (`candidates/small-93`), where the reconstruction needed 736,030,939. The other solver 93 did not straighten in 480 attempts, so it remains a drawing with curves. We have not checked whether either solver-found 93 appears elsewhere.
 
 ![Wiring diagram of the second 93](../candidates/sat-93-a/wiring.svg)
 
@@ -97,3 +97,24 @@ python3 tools/kobon_sat.py cnf --n 18 --at-least 94 --structure --fold 3 --encod
 With CaDiCaL and drat-trim installed, `cadical threefold-94.cnf proof.drat` followed by `drat-trim threefold-94.cnf proof.drat` repeats the checked proof.
 
 The segment audit uses the two existing exact triangle counters and refuses the unused-segment formula at multiple intersections. The two search commands write their logs into a new directory and refuse to overwrite an existing one. The website does not call these tools, so it works offline without Python once downloaded.
+
+## Development and checks
+
+The browser pages are static HTML, CSS and JavaScript. `site/` owns the interface. `kobon/` contains two exact geometry counters, `busybeaver/` contains two robot simulators, and `candidates/` holds the checked drawings. `tools/` holds the reconstruction, searches and certificates. `tests/` checks these against each other. `evidence/prior-art-93/` preserves the source drawing and attribution. Its upstream README describes the separate LineOrder project.
+
+Run the same standard-library checks as the publishing workflow with Python 3.10+:
+
+```sh
+python3 -m unittest tests.test_io tests.test_geometry tests.test_oracle tests.test_agreement tests.test_prior_art tests.test_learning_data tests.test_busybeaver tests.test_segment_audit tests.test_wall_crossing tests.test_beaver_certificates tests.test_kobon_sat tests.test_public_site -v
+```
+
+Solver and straightening tests skip when `python-sat`, `numpy` or `scipy` are absent. Install them in a local environment to exercise those optional paths.
+
+Browser checks require Bun, Python Playwright and its Chromium browser. They run against local files, check all saved fence drawings and all 20,736 robot tables, and exercise mouse, keyboard and touch interactions. With those dependencies already installed:
+
+```sh
+python3 -m unittest tests.test_fence_geometry tests.test_beaver_browser_core tests.test_fence_browser tests.test_fence_gestures tests.test_visitor_experience -v
+python3 tools/capture_previews.py
+```
+
+The last command captures the actual playgrounds for the home page and README. Regenerate those two images when the interface changes. The publishing workflow runs the standard-library list above. Run the browser checks locally before publishing an interface change.

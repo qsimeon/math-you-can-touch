@@ -4,7 +4,7 @@
 .live-score { margin: 0; font-size: .86rem; color: var(--red); font-weight: 700; }
 .workbench-grid { display: grid; grid-template-columns: minmax(0, 1fr) 17rem; border-top: 1px solid var(--line); }
 .board-area { min-width: 0; background: var(--board); }
-#fenceSvg { display: block; width: 100%; aspect-ratio: 3 / 2; touch-action: none; }
+#fenceSvg { display: block; width: 100%; aspect-ratio: 3 / 2; touch-action: pan-y; }
 .board-paper { fill: var(--board); }
 .yard { fill: #d9a966; fill-opacity: .62; stroke: transparent; cursor: pointer; }
 .yard:hover, .yard.is-selected { fill: #e39735; fill-opacity: .94; stroke: var(--red); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
@@ -44,6 +44,7 @@
   .edit-actions { grid-template-columns: repeat(2, 1fr); }
 }
 
+.fence-hit, .handle-hit, .turn-handle { touch-action: none; }
 .fence-hit { stroke: transparent; stroke-width: 32; pointer-events: stroke; cursor: grab; }
 .fence { pointer-events: none; }
 .handle-hit { fill: transparent; pointer-events: all; cursor: grab; }
@@ -61,3 +62,14 @@
 .board-heading { flex-wrap: wrap; }
 .quick-start { display: flex; gap: .4rem; width: 100%; }
 .quick-start button { padding: .4rem .7rem; font-size: .84rem; }
+
+.motion-lesson { border-top: 1px solid var(--line); }
+.motion-lesson > summary { padding: 1rem 0; min-height: 44px; color: var(--red); cursor: pointer; }
+.motion-lesson .lesson { border: 0; padding-top: .5rem; }
+.gesture-hint { padding-top: .25rem; border-top: 1px solid var(--line); }
+@media(max-width: 760px) {
+  .page-head { padding: 1.25rem 0; gap: .8rem; }
+  .page-head h1 { font-size: 2.6rem; }
+  .board-heading { gap: .55rem; padding: .8rem; }
+  .board-heading .live-score { font-size: .8rem; }
+}

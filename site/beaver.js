@@ -69,6 +69,8 @@
   }
   function render() {
     const f = frame();
+    const stepHadFocus = document.activeElement === ui.step;
+    const runHadFocus = document.activeElement === ui.run;
     ui.count.textContent = `Step ${f.step} of 100 · state ${f.state} · head at ${f.head}`;
     ui.narration.textContent = description(f);
     ui.outcome.textContent = conclusion(f);
@@ -77,6 +79,9 @@
     ui.back.disabled = history.length <= 1;
     ui.step.disabled = f.status !== 'READY' || timer !== null;
     ui.run.disabled = f.status !== 'READY';
+    if ((stepHadFocus && ui.step.disabled) || (runHadFocus && ui.run.disabled)) {
+      (ui.back.disabled ? ui.reset : ui.back).focus({ preventScroll: true });
+    }
     document.querySelectorAll('[data-predict]').forEach(button => { button.disabled = f.step !== 0; });
     if (f.status !== 'READY') ui.feedback.textContent = prediction === null ? 'Reset the tape to make a prediction.' : prediction === f.status ? 'Your prediction matched.' : `Not this time. ${f.status === 'UNKNOWN_AT_LIMIT' ? 'Still running at 100 means the robot neither halted nor repeated within the step limit.' : 'The explanation above shows why.'}`;
     else ui.feedback.textContent = prediction === null ? (f.step === 0 ? 'Pick one, then step or run to find out.' : 'Reset the tape to make a prediction.') : 'Prediction saved. Now step or run.';
